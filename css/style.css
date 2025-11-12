@@ -665,15 +665,19 @@ header h1 {
 
 /* Fake Error Pop-ups */
 .fake-error-popup {
-    position: fixed;
+    position: fixed !important;
     width: 380px;
-    background: white;
+    min-width: 300px;
+    max-width: 90vw;
+    background: white !important;
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
-    animation: pop-in 0.3s ease-out;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+    z-index: 99999 !important;
     border-left: 5px solid;
     overflow: hidden;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .fake-error-critical {
@@ -800,6 +804,34 @@ header h1 {
 }
 
 /* Animations */
+.fake-error-popup {
+    animation: pop-in 0.3s ease-out;
+}
+
+.fake-error-popup.slide-in-left {
+    animation: slide-in-left 0.4s ease-out;
+}
+
+.fake-error-popup.slide-in-right {
+    animation: slide-in-right 0.4s ease-out;
+}
+
+.fake-error-popup.slide-in-top {
+    animation: slide-in-top 0.4s ease-out;
+}
+
+.fake-error-popup.slide-in-bottom {
+    animation: slide-in-bottom 0.4s ease-out;
+}
+
+.fake-error-popup.zoom-in {
+    animation: zoom-in 0.4s ease-out;
+}
+
+.fake-error-popup.rotate-in {
+    animation: rotate-in 0.5s ease-out;
+}
+
 @keyframes pop-in {
     from {
         opacity: 0;

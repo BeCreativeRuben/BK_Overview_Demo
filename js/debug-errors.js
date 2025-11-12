@@ -138,7 +138,21 @@ function createFakeError() {
         </div>
     `;
     
+    // Voeg toe aan body
     document.body.appendChild(errorPopup);
+    
+    // Forceer reflow om animatie te triggeren
+    errorPopup.offsetHeight;
+    
+    // Zorg dat popup zichtbaar is
+    errorPopup.style.display = 'block';
+    errorPopup.style.visibility = 'visible';
+    errorPopup.style.opacity = '1';
+    
+    // Shake effect na korte delay
+    setTimeout(() => {
+        errorPopup.classList.add('shake');
+    }, 100);
     
     // Auto-remove na willekeurige tijd (3-8 seconden)
     const autoRemoveTime = 3000 + Math.random() * 5000;
@@ -152,11 +166,6 @@ function createFakeError() {
             }, 500);
         }
     }, autoRemoveTime);
-    
-    // Shake effect
-    setTimeout(() => {
-        errorPopup.classList.add('shake');
-    }, 100);
 }
 
 /**
