@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battlekart Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Battlekart Dashboard</h1>
+            <p class="subtitle">Overzicht van alle tools en toepassingen</p>
+        </header>
+
+        <div id="loading" class="loading">
+            <p>Laden...</p>
+        </div>
+
+        
+        <div id="error" class="error" style="display: none;">
+            <p>Er is een fout opgetreden bij het laden van de data.</p>
+            <button onclick="loadDashboard()">Opnieuw proberen</button>
+        </div>
+
+        <main id="dashboard" class="dashboard" style="display: none;">
+            <div id="tools-container" class="tools-container">
+                <!-- Tool items worden hier dynamisch toegevoegd -->
+            </div>
+        </main>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
+
