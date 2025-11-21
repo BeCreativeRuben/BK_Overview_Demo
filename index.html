@@ -13,120 +13,14 @@
             <p class="subtitle">Overzicht van alle tools en toepassingen</p>
         </header>
 
-        <div id="loading" class="loading">
-            <p>Laden...</p>
-        </div>
-
-        
-        <div id="error" class="error" style="display: none;">
-            <p>Er is een fout opgetreden bij het laden van de data.</p>
-            <button onclick="loadDashboard()">Opnieuw proberen</button>
-        </div>
-
-        <main id="dashboard" class="dashboard" style="display: none;">
+        <main id="dashboard" class="dashboard">
             <div id="tools-container" class="tools-container">
                 <!-- Tool items worden hier dynamisch toegevoegd -->
             </div>
         </main>
     </div>
 
-    <!-- Kuismachine Logs Overlay -->
-    <div id="kuismachine-logs-overlay" class="overlay" style="display: none;">
-        <div class="overlay-backdrop" onclick="closeKuismachineLogsOverlay()"></div>
-        <div class="overlay-modal">
-            <div class="overlay-header">
-                <h2>Kuismachine Logs Invoeren</h2>
-                <button class="overlay-close" onclick="closeKuismachineLogsOverlay()">&times;</button>
-            </div>
-            <form id="kuismachine-logs-form" class="overlay-form" onsubmit="handleKuismachineLogsSubmit(event)">
-                <div class="form-group">
-                    <label for="naam">Naam <span class="required">*</span></label>
-                    <input type="text" id="naam" name="naam" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="datum">Datum</label>
-                    <input type="text" id="datum" name="datum" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label for="tijd">Tijd</label>
-                    <input type="text" id="tijd" name="tijd" readonly>
-                </div>
-
-                <div class="form-section">
-                    <h3>Machines</h3>
-                    
-                    <div class="form-group checkbox-group">
-                        <label>
-                            <input type="checkbox" id="kuismachine-gebruikt" name="kuismachineGebruikt" onchange="toggleMachineFields('kuismachine')">
-                            Kuismachine gebruikt
-                        </label>
-                    </div>
-
-                    <div id="kuismachine-fields" class="machine-fields" style="display: none;">
-                        <div class="form-group checkbox-group">
-                            <label>
-                                <input type="checkbox" id="kuismachine-uitgekuist" name="kuismachineUitgekuist">
-                                Kuismachine uitgekuist
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label for="kuismachine-starttijd">Starttijd (HH:MM) <span class="required">*</span></label>
-                            <input type="text" id="kuismachine-starttijd" name="kuismachineStarttijd" placeholder="bijv. 14:30" pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$">
-                        </div>
-                        <div class="form-group">
-                            <label for="kuismachine-eindtijd">Eindtijd (HH:MM) <span class="required">*</span></label>
-                            <input type="text" id="kuismachine-eindtijd" name="kuismachineEindtijd" placeholder="bijv. 15:45" pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$">
-                        </div>
-                    </div>
-
-                    <div class="form-group checkbox-group">
-                        <label>
-                            <input type="checkbox" id="stofzuiger-gebruikt" name="stofzuigerGebruikt" onchange="toggleMachineFields('stofzuiger')">
-                            Stofzuiger gebruikt
-                        </label>
-                    </div>
-
-                    <div id="stofzuiger-fields" class="machine-fields" style="display: none;">
-                        <div class="form-group checkbox-group">
-                            <label>
-                                <input type="checkbox" id="stofzuiger-uitgekuist" name="stofzuigerUitgekuist">
-                                Stofzuiger uitgekuist
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label for="stofzuiger-starttijd">Starttijd (HH:MM) <span class="required">*</span></label>
-                            <input type="text" id="stofzuiger-starttijd" name="stofzuigerStarttijd" placeholder="bijv. 14:30" pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$">
-                        </div>
-                        <div class="form-group">
-                            <label for="stofzuiger-eindtijd">Eindtijd (HH:MM) <span class="required">*</span></label>
-                            <input type="text" id="stofzuiger-eindtijd" name="stofzuigerEindtijd" placeholder="bijv. 15:45" pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$">
-                        </div>
-                    </div>
-                </div>
-
-                <div id="form-error" class="form-error" style="display: none;"></div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="closeKuismachineLogsOverlay()">Annuleren</button>
-                    <button type="submit" class="btn-primary">Opslaan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script src="js/dashboard.js"></script>
-    
-    <!-- ============================================ -->
-    <!-- EASTER EGG: FAKE ERROR MESSAGES - DEBUG MODE -->
-    <!-- Verwijder of comment deze sectie uit om te deactiveren -->
-    <!-- ============================================ -->
-    <button id="debug-error-button" class="debug-error-button" onclick="triggerFakeErrors()" title="Debug: Trigger fake errors">
-        ⚠️ DEBUG
-    </button>
-    <script src="js/debug-errors.js"></script>
-    <!-- ============================================ -->
 </body>
 </html>
 
