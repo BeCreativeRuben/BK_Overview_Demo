@@ -183,7 +183,7 @@ async function createToolCard(tool) {
             const baanBStofzuiger = lastLog.stofzuigerGebruikt && lastLog.stofzuigerPisteB;
             
             // Helper functie voor checkmark
-            const getCheckmark = (value) => value ? '<span class="checkmark-yes">✓</span> JA' : '<span class="checkmark-no">✗</span> NEE';
+            const getCheckmark = (value) => value ? '<span class="checkmark-yes">✓</span>' : '<span class="checkmark-no">✗</span>';
             
             kuismachineInfoHTML = `
                 <div class="info-item">
