@@ -145,6 +145,11 @@ header h1 {
     font-style: italic;
 }
 
+.info-value-user {
+    color: #667eea;
+    font-weight: 600;
+}
+
 .tool-actions {
     margin-top: 16px;
     padding-top: 16px;

@@ -148,11 +148,13 @@ async function createToolCard(tool) {
     card.className = 'tool-card';
     card.setAttribute('data-tool-id', tool.id);
     
-    // Haal laatste klik tijd op (async)
-    const lastClick = await getLastClick(tool.id);
+    // Haal laatste klik data op (async) - inclusief gebruikersnaam
+    const lastClickData = await getLastClickData(tool.id);
+    const lastClick = lastClickData ? new Date(lastClickData.timestamp) : null;
     const lastClickText = lastClick 
         ? formatDateTime(lastClick) 
         : 'Nog niet geklikt';
+    const lastClickUserName = lastClickData?.userName || null;
     
     // Bereken "X geleden" tag
     const timeAgoText = lastClick ? getTimeAgo(lastClick) : null;
@@ -203,6 +205,12 @@ async function createToolCard(tool) {
                 <span class="info-label">Laatst geklikt:</span>
                 <span class="info-value ${!lastClick ? 'empty' : ''}">${escapeHtml(lastClickText)}</span>
             </div>
+            ${lastClickUserName ? `
+            <div class="info-item">
+                <span class="info-label">Door:</span>
+                <span class="info-value info-value-user">${escapeHtml(lastClickUserName)}</span>
+            </div>
+            ` : ''}
         </div>
         <div class="tool-actions">
             ${actionsHTML}
@@ -319,8 +327,8 @@ function handleLinkClick(toolId, event) {
     const baseToolId = toolId.replace('-logboek', '');
     saveClickLog(baseToolId, now);
     
-    // Update de weergave
-    updateLastClickDisplay(baseToolId, now);
+    // Update de weergave (met gebruikersnaam)
+    updateLastClickDisplay(baseToolId, now, currentUserName);
 }
 
 /**
@@ -372,9 +380,9 @@ async function saveClickLog(toolId, dateTime) {
 }
 
 /**
- * Haal laatste klik tijd op uit Firebase of localStorage
+ * Haal laatste klik data op uit Firebase of localStorage (inclusief gebruikersnaam)
  */
-async function getLastClick(toolId) {
+async function getLastClickData(toolId) {
     // Probeer eerst Firebase (als beschikbaar)
     if (database && firebaseFunctions) {
         try {
@@ -384,7 +392,11 @@ async function getLastClick(toolId) {
             
             if (snapshot.exists()) {
                 const data = snapshot.val();
-                return new Date(data.timestamp);
+                return {
+                    timestamp: data.timestamp,
+                    dateTime: data.dateTime,
+                    userName: data.userName || null
+                };
             }
         } catch (error) {
             console.error('Error loading from Firebase:', error);
@@ -396,7 +408,11 @@ async function getLastClick(toolId) {
         const stored = localStorage.getItem(`lastClick_${toolId}`);
         if (stored) {
             const data = JSON.parse(stored);
-            return new Date(data.timestamp);
+            return {
+                timestamp: data.timestamp,
+                dateTime: data.dateTime,
+                userName: data.userName || null
+            };
         }
     } catch (error) {
         console.error('Error loading from localStorage:', error);
@@ -406,9 +422,17 @@ async function getLastClick(toolId) {
 }
 
 /**
- * Update de weergave van laatste klik tijd
+ * Haal laatste klik tijd op uit Firebase of localStorage (backward compatibility)
  */
-function updateLastClickDisplay(toolId, dateTime) {
+async function getLastClick(toolId) {
+    const data = await getLastClickData(toolId);
+    return data ? new Date(data.timestamp) : null;
+}
+
+/**
+ * Update de weergave van laatste klik tijd en gebruikersnaam
+ */
+function updateLastClickDisplay(toolId, dateTime, userName = null) {
     // Voor logboek clicks, gebruik de basis toolId
     const baseToolId = toolId.replace('-logboek', '');
     const card = document.querySelector(`.tool-card[data-tool-id="${baseToolId}"]`);
@@ -417,6 +441,37 @@ function updateLastClickDisplay(toolId, dateTime) {
         if (infoValue) {
             infoValue.textContent = formatDateTime(dateTime);
             infoValue.classList.remove('empty');
+        }
+        
+        // Update of voeg gebruikersnaam toe
+        const toolInfo = card.querySelector('.tool-info');
+        if (toolInfo && userName) {
+            // Zoek naar bestaande gebruikersnaam item
+            const allInfoItems = toolInfo.querySelectorAll('.info-item');
+            let userNameItem = null;
+            for (const item of allInfoItems) {
+                if (item.querySelector('.info-value-user')) {
+                    userNameItem = item;
+                    break;
+                }
+            }
+            
+            if (!userNameItem) {
+                // Voeg nieuwe regel toe voor gebruikersnaam
+                userNameItem = document.createElement('div');
+                userNameItem.className = 'info-item';
+                userNameItem.innerHTML = `
+                    <span class="info-label">Door:</span>
+                    <span class="info-value info-value-user">${escapeHtml(userName)}</span>
+                `;
+                toolInfo.appendChild(userNameItem);
+            } else {
+                // Update bestaande gebruikersnaam
+                const userNameValue = userNameItem.querySelector('.info-value-user');
+                if (userNameValue) {
+                    userNameValue.textContent = userName;
+                }
+            }
         }
         
         // Update time-ago tag
@@ -458,9 +513,10 @@ async function setupFirebaseListeners() {
                 Object.keys(allClicks).forEach(toolId => {
                     const clickData = allClicks[toolId];
                     const dateTime = new Date(clickData.timestamp);
+                    const userName = clickData.userName || null;
                     
-                    // Update de weergave
-                    updateLastClickDisplay(toolId, dateTime);
+                    // Update de weergave (met gebruikersnaam)
+                    updateLastClickDisplay(toolId, dateTime, userName);
                     
                     // Update ook localStorage als backup
                     try {
