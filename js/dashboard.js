@@ -64,6 +64,10 @@ let firebaseFunctions = null;
 // Huidige gebruiker naam
 let currentUserName = null;
 
+// Inactivity timer
+let inactivityTimer = null;
+const INACTIVITY_TIMEOUT = 3 * 60 * 1000; // 3 minuten in milliseconden
+
 // Wacht tot Firebase geladen is
 function waitForFirebase() {
     return new Promise((resolve) => {
@@ -105,7 +109,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         showDashboard();
         loadDashboard();
         setupFirebaseListeners();
+        // Start inactivity timer
+        startInactivityTimer();
     }
+    
+    // Setup activity listeners
+    setupActivityListeners();
 });
 
 /**
@@ -360,6 +369,8 @@ function handleNameSubmit(event) {
         showDashboard();
         loadDashboard();
         setupFirebaseListeners();
+        // Start inactivity timer na login
+        startInactivityTimer();
     }
 }
 
@@ -372,6 +383,73 @@ function changeUserName() {
         nameInput.value = currentUserName;
     }
     showNameModal();
+}
+
+/**
+ * Start inactivity timer
+ */
+function startInactivityTimer() {
+    // Clear bestaande timer
+    resetInactivityTimer();
+    
+    // Start nieuwe timer
+    inactivityTimer = setTimeout(() => {
+        logoutUser();
+    }, INACTIVITY_TIMEOUT);
+}
+
+/**
+ * Reset inactivity timer
+ */
+function resetInactivityTimer() {
+    if (inactivityTimer) {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = null;
+    }
+}
+
+/**
+ * Logout gebruiker na inactivity
+ */
+function logoutUser() {
+    // Clear gebruikersnaam
+    currentUserName = null;
+    try {
+        localStorage.removeItem('userName');
+    } catch (error) {
+        console.error('Error removing userName:', error);
+    }
+    
+    // Verberg dashboard
+    const container = document.getElementById('main-container');
+    if (container) {
+        container.style.display = 'none';
+    }
+    
+    // Sluit eventuele open overlays
+    closeKuismachineOverlay();
+    
+    // Toon naam modal opnieuw
+    showNameModal();
+    
+    console.log('Gebruiker uitgelogd wegens inactiviteit');
+}
+
+/**
+ * Setup activity listeners om inactivity timer te resetten
+ */
+function setupActivityListeners() {
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    events.forEach(event => {
+        document.addEventListener(event, () => {
+            // Reset timer alleen als gebruiker ingelogd is
+            if (currentUserName) {
+                resetInactivityTimer();
+                startInactivityTimer();
+            }
+        }, { passive: true });
+    });
 }
 
 /**
