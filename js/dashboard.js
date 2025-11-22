@@ -51,6 +51,59 @@ const tools = [
     }
 ];
 
+// Dagplanning data
+const dayPlanning = {
+    opening: [
+        { 
+            id: 'clock-in', 
+            title: 'Inklokken', 
+            description: 'BK Panel → HR → Clocking', 
+            url: 'https://oauth.battlekart.com/authorize?client_id=d66a502f0a4b7690ed5808e0b559010b&redirect_uri=https%3A%2F%2Fpanel.battlekart.com%2F&response_type=id_token&scope=openid+profile+email&state=33be5a04e47045b69f25360d57512097&brand_id=2&flow=', 
+            icon: '🕐' 
+        },
+        { 
+            id: 'checklist', 
+            title: 'Checklist overlopen', 
+            description: 'BK Panel → Checklists → Execute', 
+            url: 'https://oauth.battlekart.com/authorize?client_id=d66a502f0a4b7690ed5808e0b559010b&redirect_uri=https%3A%2F%2Fpanel.battlekart.com%2F&response_type=id_token&scope=openid+profile+email&state=33be5a04e47045b69f25360d57512097&brand_id=2&flow=', 
+            icon: '✅' 
+        },
+        { 
+            id: 'cash-payments-morning', 
+            title: 'Cash & Payments Employees', 
+            toolId: 'cash-payments', 
+            icon: '💰' 
+        },
+        { 
+            id: 'kart-daily', 
+            title: 'Kart Daily logboek', 
+            toolId: 'kart-daily-logboek', 
+            icon: '📋' 
+        },
+        { 
+            id: 'kuismachine', 
+            title: 'Kuismachine logs', 
+            toolId: 'kuismachine-logs', 
+            icon: '🧹' 
+        }
+    ],
+    during: [],
+    closing: [
+        { 
+            id: 'cash-payments-evening', 
+            title: 'Cash & Payments Employees', 
+            toolId: 'cash-payments', 
+            icon: '💰' 
+        },
+        { 
+            id: 'daily-report', 
+            title: 'Daily Report', 
+            toolId: 'daily-report', 
+            icon: '📊' 
+        }
+    ]
+};
+
 // Firebase database referentie en functies (wordt gezet in index.html)
 let database = null;
 let firebaseFunctions = null;
@@ -115,6 +168,12 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Laad dashboard en toon alle tools
  */
 async function loadDashboard() {
+    // Check en reset dagplanning indien nodig
+    await checkAndResetDayPlanning();
+    
+    // Render dagplanning
+    await renderDayPlanning();
+    
     const container = document.getElementById('tools-container');
     container.innerHTML = '';
 
@@ -137,8 +196,8 @@ async function loadDashboard() {
     }
 
     // Toon wekelijkse taken
-    for (const tool of weeklyTools) {
-        const toolCard = await createToolCard(tool);
+    for (const weeklyTool of weeklyTools) {
+        const toolCard = await createToolCard(weeklyTool);
         container.appendChild(toolCard);
     }
 }
@@ -1108,4 +1167,263 @@ async function getLastKuismachineLog() {
     }
     
     return null;
+}
+
+/**
+ * Haal dagplanning status op uit Firebase
+ */
+async function getDayPlanningStatus(dateString, userId) {
+    if (!database || !firebaseFunctions || !userId) {
+        return {};
+    }
+    
+    try {
+        const { ref, get } = firebaseFunctions;
+        const statusRef = ref(database, `dayPlanning/${dateString}/${userId}`);
+        const snapshot = await get(statusRef);
+        
+        if (snapshot.exists()) {
+            return snapshot.val();
+        }
+    } catch (error) {
+        console.error('Error loading day planning status from Firebase:', error);
+    }
+    
+    return {};
+}
+
+/**
+ * Sla dagplanning status op in Firebase
+ */
+async function saveDayPlanningStatus(taskId, completed) {
+    if (!currentUserName || !database || !firebaseFunctions) {
+        return;
+    }
+    
+    const now = new Date();
+    const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    try {
+        const { ref, set } = firebaseFunctions;
+        const statusRef = ref(database, `dayPlanning/${dateString}/${currentUserName}/${taskId}`);
+        
+        await set(statusRef, {
+            completed: completed,
+            timestamp: now.getTime(),
+            dateTime: now.toISOString()
+        });
+    } catch (error) {
+        console.error('Error saving day planning status to Firebase:', error);
+    }
+}
+
+/**
+ * Reset dagplanning status voor een specifieke datum
+ */
+async function resetDayPlanningStatus(dateString) {
+    if (!database || !firebaseFunctions) {
+        return;
+    }
+    
+    try {
+        const { ref, remove } = firebaseFunctions;
+        const statusRef = ref(database, `dayPlanning/${dateString}`);
+        await remove(statusRef);
+    } catch (error) {
+        console.error('Error resetting day planning status:', error);
+    }
+}
+
+/**
+ * Controleer en reset dagplanning indien nodig (om 04:00)
+ */
+async function checkAndResetDayPlanning() {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentDate = now.toISOString().split('T')[0];
+    
+    // Check of we na 04:00 zijn
+    if (currentHour >= 4) {
+        // Haal laatste reset datum op
+        const lastResetKey = 'dayPlanning_lastReset';
+        let lastResetDate = null;
+        
+        try {
+            lastResetDate = localStorage.getItem(lastResetKey);
+        } catch (error) {
+            console.error('Error reading last reset date:', error);
+        }
+        
+        // Als laatste reset niet vandaag was, reset alle taken
+        if (lastResetDate !== currentDate) {
+            await resetDayPlanningStatus(currentDate);
+            
+            // Sla huidige datum op als laatste reset
+            try {
+                localStorage.setItem(lastResetKey, currentDate);
+            } catch (error) {
+                console.error('Error saving last reset date:', error);
+            }
+        }
+    }
+}
+
+/**
+ * Render dagplanning sectie
+ */
+async function renderDayPlanning() {
+    const planningContainer = document.getElementById('day-planning');
+    if (!planningContainer) {
+        return;
+    }
+    
+    if (!currentUserName) {
+        planningContainer.innerHTML = '';
+        return;
+    }
+    
+    const now = new Date();
+    const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // Haal status op uit Firebase
+    const status = await getDayPlanningStatus(dateString, currentUserName);
+    
+    let html = '<div class="day-planning-header"><h2>Dagplanning</h2></div>';
+    
+    // Opening sectie
+    if (dayPlanning.opening.length > 0) {
+        html += '<div class="planning-section"><h3>Opening</h3><div class="planning-tasks">';
+        for (const task of dayPlanning.opening) {
+            const isCompleted = status[task.id]?.completed || false;
+            html += renderPlanningTask(task, isCompleted);
+        }
+        html += '</div></div>';
+    }
+    
+    // During sectie (leeg voor nu, maar structuur is er)
+    if (dayPlanning.during.length > 0) {
+        html += '<div class="planning-section"><h3>Doorheen de dag</h3><div class="planning-tasks">';
+        for (const task of dayPlanning.during) {
+            const isCompleted = status[task.id]?.completed || false;
+            html += renderPlanningTask(task, isCompleted);
+        }
+        html += '</div></div>';
+    }
+    
+    // Closing sectie
+    if (dayPlanning.closing.length > 0) {
+        html += '<div class="planning-section"><h3>Sluiting</h3><div class="planning-tasks">';
+        for (const task of dayPlanning.closing) {
+            const isCompleted = status[task.id]?.completed || false;
+            html += renderPlanningTask(task, isCompleted);
+        }
+        html += '</div></div>';
+    }
+    
+    planningContainer.innerHTML = html;
+}
+
+/**
+ * Render een enkele planning taak
+ */
+function renderPlanningTask(task, isCompleted) {
+    const completedClass = isCompleted ? 'completed' : '';
+    const checkedAttr = isCompleted ? 'checked' : '';
+    
+    let taskHTML = `<div class="planning-task ${completedClass}" data-task-id="${escapeHtml(task.id)}">`;
+    taskHTML += `<input type="checkbox" class="planning-checkbox" ${checkedAttr} onchange="toggleCompletedTask('${escapeHtml(task.id)}', event)">`;
+    taskHTML += `<div class="planning-task-content" onclick="handlePlanningTaskClick('${escapeHtml(task.id)}', event)">`;
+    taskHTML += `<span class="planning-task-icon">${task.icon}</span>`;
+    taskHTML += `<div class="planning-task-info">`;
+    taskHTML += `<div class="planning-task-title">${escapeHtml(task.title)}</div>`;
+    if (task.description) {
+        taskHTML += `<div class="planning-task-description">${escapeHtml(task.description)}</div>`;
+    }
+    taskHTML += `</div></div></div>`;
+    
+    return taskHTML;
+}
+
+/**
+ * Toggle voltooid status van een planning taak
+ */
+async function toggleCompletedTask(taskId, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    if (!currentUserName) {
+        return;
+    }
+    
+    const checkbox = event?.target;
+    const completed = checkbox?.checked || false;
+    
+    // Sla status op in Firebase
+    await saveDayPlanningStatus(taskId, completed);
+    
+    // Update UI
+    const taskElement = document.querySelector(`.planning-task[data-task-id="${taskId}"]`);
+    if (taskElement) {
+        if (completed) {
+            taskElement.classList.add('completed');
+        } else {
+            taskElement.classList.remove('completed');
+        }
+    }
+}
+
+/**
+ * Handle klik op planning taak (open tool/link)
+ */
+async function handlePlanningTaskClick(taskId, event) {
+    // Voorkom dat checkbox toggle wordt getriggerd
+    if (event && event.target.classList.contains('planning-checkbox')) {
+        return;
+    }
+    
+    if (!currentUserName) {
+        showNameModal();
+        return;
+    }
+    
+    // Vind de taak in dayPlanning
+    let task = null;
+    for (const section of ['opening', 'during', 'closing']) {
+        task = dayPlanning[section].find(t => t.id === taskId);
+        if (task) break;
+    }
+    
+    if (!task) {
+        return;
+    }
+    
+    const now = new Date();
+    
+    // Als taak een toolId heeft, open de tool
+    if (task.toolId) {
+        // Vind de tool card en scroll ernaar toe
+        const toolCard = document.querySelector(`.tool-card[data-tool-id="${task.toolId}"]`);
+        if (toolCard) {
+            toolCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Trigger click op tool button na korte delay
+            setTimeout(() => {
+                const toolButton = toolCard.querySelector('.tool-link-button');
+                if (toolButton && !toolButton.disabled) {
+                    toolButton.click();
+                }
+            }, 300);
+        }
+        
+        // Log click
+        saveClickLog(task.toolId, now);
+    } 
+    // Als taak een URL heeft, open externe link
+    else if (task.url) {
+        window.open(task.url, '_blank');
+        
+        // Log click met taskId
+        saveClickLog(taskId, now);
+    }
 }

@@ -75,6 +75,115 @@ header h1 {
     opacity: 0.95;
 }
 
+/* Day Planning Styles */
+.day-planning {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.day-planning-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.day-planning-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.planning-section {
+    margin-bottom: 24px;
+}
+
+.planning-section:last-child {
+    margin-bottom: 0;
+}
+
+.planning-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.planning-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.planning-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.planning-task:hover {
+    background: #f0f0f0;
+    border-color: #667eea;
+}
+
+.planning-task.completed {
+    opacity: 0.7;
+    background: #e8f5e9;
+}
+
+.planning-task.completed .planning-task-title {
+    text-decoration: line-through;
+    color: #666;
+}
+
+.planning-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: #667eea;
+    flex-shrink: 0;
+}
+
+.planning-task-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+}
+
+.planning-task-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.planning-task-info {
+    flex: 1;
+}
+
+.planning-task-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.planning-task-description {
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+}
+
 .dashboard {
     animation: fadeIn 0.5s ease-in;
 }

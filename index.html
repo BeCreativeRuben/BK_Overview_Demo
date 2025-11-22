@@ -177,6 +177,10 @@
             </a>
         </div>
 
+        <div id="day-planning" class="day-planning">
+            <!-- Dagplanning wordt hier dynamisch gegenereerd -->
+        </div>
+
         <main id="dashboard" class="dashboard">
             <div id="tools-container" class="tools-container">
                 <!-- Tool items worden hier dynamisch toegevoegd -->
@@ -187,7 +191,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, set, get, onValue, push, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, set, get, onValue, push, query, orderByChild, limitToLast, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
         
         // Firebase configuratie
         const firebaseConfig = {
@@ -207,7 +211,7 @@
         
         // Maak database en functies beschikbaar voor dashboard.js
         window.firebaseDatabase = database;
-        window.firebaseDatabaseFunctions = { ref, set, get, onValue, push, query, orderByChild, limitToLast };
+        window.firebaseDatabaseFunctions = { ref, set, get, onValue, push, query, orderByChild, limitToLast, remove };
     </script>
     <script src="js/dashboard.js"></script>
 </body>
