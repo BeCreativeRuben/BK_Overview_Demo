@@ -10,15 +10,13 @@ const tools = [
     {
         id: 'kart-daily-logboek',
         title: 'Kart Daily logboek',
-        url: 'Kart Logboek v.xlsx',
-        isFile: true,
+        url: 'https://battlekartbelgium-my.sharepoint.com/:x:/g/personal/kayode_gent_battlekart_com/IQCMZLSPmdZfTIf2hhkD0WneAVO_aWJp5IvU1HPyfNuCJrs?e=q2OFJM',
         frequency: 'daily'
     },
     {
         id: 'daily-report',
         title: 'Daily Report',
-        url: 'Dagreport.docx',
-        isFile: true,
+        url: 'https://battlekartbelgium-my.sharepoint.com/:w:/g/personal/info_gent_battlekart_com/IQAFUG29K3cPRqUOHIo-eiC3AedKaIhOp3YJX1ZYJD92NcM?e=Kewg1s',
         frequency: 'daily'
     },
     {
