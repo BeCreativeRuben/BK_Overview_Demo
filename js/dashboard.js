@@ -477,14 +477,25 @@ async function createToolCard(tool) {
             const dateTimeStr = formatDateTime(logDate);
             const userName = lastLog.userName || 'Onbekend';
             
-            // Bepaal status per baan
-            const baanAKuismachine = lastLog.kuismachineGebruikt && lastLog.kuismachinePisteA;
-            const baanAStofzuiger = lastLog.stofzuigerGebruikt && lastLog.stofzuigerPisteA;
-            const baanBKuismachine = lastLog.kuismachineGebruikt && lastLog.kuismachinePisteB;
-            const baanBStofzuiger = lastLog.stofzuigerGebruikt && lastLog.stofzuigerPisteB;
+            // Bepaal status per baan - expliciet controleren op boolean true
+            // Firebase kan booleans soms als strings opslaan, dus we normaliseren ze
+            const kuismachineGebruikt = lastLog.kuismachineGebruikt === true || lastLog.kuismachineGebruikt === 'true';
+            const stofzuigerGebruikt = lastLog.stofzuigerGebruikt === true || lastLog.stofzuigerGebruikt === 'true';
+            const kuismachinePisteA = lastLog.kuismachinePisteA === true || lastLog.kuismachinePisteA === 'true';
+            const kuismachinePisteB = lastLog.kuismachinePisteB === true || lastLog.kuismachinePisteB === 'true';
+            const stofzuigerPisteA = lastLog.stofzuigerPisteA === true || lastLog.stofzuigerPisteA === 'true';
+            const stofzuigerPisteB = lastLog.stofzuigerPisteB === true || lastLog.stofzuigerPisteB === 'true';
             
-            // Helper functie voor checkmark
-            const getCheckmark = (value) => value ? '<span class="checkmark-yes">✓</span>' : '<span class="checkmark-no">✗</span>';
+            const baanAKuismachine = kuismachineGebruikt && kuismachinePisteA;
+            const baanAStofzuiger = stofzuigerGebruikt && stofzuigerPisteA;
+            const baanBKuismachine = kuismachineGebruikt && kuismachinePisteB;
+            const baanBStofzuiger = stofzuigerGebruikt && stofzuigerPisteB;
+            
+            // Helper functie voor checkmark - expliciet controleren op true
+            const getCheckmark = (value) => {
+                const isTrue = value === true || value === 'true' || value === 1 || value === '1';
+                return isTrue ? '<span class="checkmark-yes">✓</span>' : '<span class="checkmark-no">✗</span>';
+            };
             
             kuismachineInfoHTML = `
                 <div class="info-item">
@@ -1013,6 +1024,25 @@ async function setupFirebaseListeners() {
             console.error('Error in Firebase listener:', error);
         });
         
+        // Luister naar kuismachine logs voor real-time updates
+        const kuismachineLogsRef = ref(database, 'logs/kuismachine-logs');
+        onValue(kuismachineLogsRef, async (snapshot) => {
+            if (snapshot.exists()) {
+                // Update kuismachine tool card wanneer logs veranderen
+                const toolCard = document.querySelector('.tool-card[data-tool-id="kuismachine-logs"]');
+                if (toolCard) {
+                    // Herlaad alleen de kuismachine tool card
+                    const kuismachineTool = tools.find(t => t.id === 'kuismachine-logs');
+                    if (kuismachineTool) {
+                        const newCard = await createToolCard(kuismachineTool);
+                        toolCard.replaceWith(newCard);
+                    }
+                }
+            }
+        }, (error) => {
+            console.error('Error in kuismachine logs listener:', error);
+        });
+        
         console.log('Firebase real-time listeners actief');
         console.log('Alle click logs zijn beschikbaar in Firebase onder: logs/{toolId}/');
     } catch (error) {
@@ -1415,7 +1445,19 @@ async function getLastKuismachineLog() {
                 const log = logs[logId];
                 if (log.timestamp && log.timestamp > lastTimestamp) {
                     lastTimestamp = log.timestamp;
-                    lastLog = log;
+                    // Normaliseer boolean waarden (Firebase kan ze soms als strings opslaan)
+                    const normalizedLog = {
+                        ...log,
+                        kuismachineGebruikt: log.kuismachineGebruikt === true || log.kuismachineGebruikt === 'true',
+                        kuismachinePisteA: log.kuismachinePisteA === true || log.kuismachinePisteA === 'true',
+                        kuismachinePisteB: log.kuismachinePisteB === true || log.kuismachinePisteB === 'true',
+                        stofzuigerGebruikt: log.stofzuigerGebruikt === true || log.stofzuigerGebruikt === 'true',
+                        stofzuigerPisteA: log.stofzuigerPisteA === true || log.stofzuigerPisteA === 'true',
+                        stofzuigerPisteB: log.stofzuigerPisteB === true || log.stofzuigerPisteB === 'true',
+                        kuismachineUitgekuist: log.kuismachineUitgekuist === true || log.kuismachineUitgekuist === 'true',
+                        stofzuigerUitgekuist: log.stofzuigerUitgekuist === true || log.stofzuigerUitgekuist === 'true'
+                    };
+                    lastLog = normalizedLog;
                 }
             });
             
