@@ -197,16 +197,18 @@ async function loadKuismachineLogs(database, ref, get) {
                     kuismachinePisteA: log.kuismachinePisteA || false,
                     kuismachinePisteB: log.kuismachinePisteB || false,
                     kuismachineUitgekuist: log.kuismachineUitgekuist || false,
-                    kuismachineStarttijd: log.kuismachineStarttijd || '',
+                    kuismachineBegintijd: log.kuismachineBegintijd || log.kuismachineStarttijd || '',
                     kuismachineEindtijd: log.kuismachineEindtijd || '',
                     kuismachineReden: log.kuismachineReden || '',
+                    kuismachineNietGebruiktReden: log.kuismachineNietGebruiktReden || '',
                     stofzuigerGebruikt: log.stofzuigerGebruikt || false,
                     stofzuigerPisteA: log.stofzuigerPisteA || false,
                     stofzuigerPisteB: log.stofzuigerPisteB || false,
                     stofzuigerUitgekuist: log.stofzuigerUitgekuist || false,
-                    stofzuigerStarttijd: log.stofzuigerStarttijd || '',
+                    stofzuigerBegintijd: log.stofzuigerBegintijd || log.stofzuigerStarttijd || '',
                     stofzuigerEindtijd: log.stofzuigerEindtijd || '',
                     stofzuigerReden: log.stofzuigerReden || '',
+                    stofzuigerNietGebruiktReden: log.stofzuigerNietGebruiktReden || '',
                     type: 'kuismachine'
                 });
             });
@@ -466,11 +468,11 @@ function renderKuismachineLogsTable() {
     const tbody = document.getElementById('kuismachine-table-body');
     
     if (filteredLogs.kuismachine.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">Geen logs gevonden</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">Geen logs gevonden</td></tr>';
         return;
     }
     
-    tbody.innerHTML = filteredLogs.kuismachine.map(log => {
+    tbody.innerHTML = filteredLogs.kuismachine.map((log, index) => {
         const date = new Date(log.timestamp);
         const dateStr = date.toLocaleString('nl-NL', {
             year: 'numeric',
@@ -480,26 +482,136 @@ function renderKuismachineLogsTable() {
             minute: '2-digit'
         });
         
-        const kuismachinePistes = [];
-        if (log.kuismachinePisteA) kuismachinePistes.push('A');
-        if (log.kuismachinePisteB) kuismachinePistes.push('B');
-        
-        const stofzuigerPistes = [];
-        if (log.stofzuigerPisteA) stofzuigerPistes.push('A');
-        if (log.stofzuigerPisteB) stofzuigerPistes.push('B');
-        
         return `
-            <tr>
+            <tr class="expandable-row" onclick="toggleKuismachineDetails(${index}, event)">
                 <td>${escapeHtml(dateStr)}</td>
                 <td>${escapeHtml(log.userName)}</td>
                 <td>${log.kuismachineGebruikt ? '<span class="badge badge-yes">Ja</span>' : '<span class="badge badge-no">Nee</span>'}</td>
-                <td>${kuismachinePistes.length > 0 ? kuismachinePistes.join(', ') : '-'}</td>
-                <td>${log.kuismachineUitgekuist ? '<span class="badge badge-yes">Ja</span>' : '<span class="badge badge-no">Nee</span>'}</td>
                 <td>${log.stofzuigerGebruikt ? '<span class="badge badge-yes">Ja</span>' : '<span class="badge badge-no">Nee</span>'}</td>
-                <td>${escapeHtml(log.kuismachineReden || log.stofzuigerReden || '-')}</td>
+                <td><button class="btn-secondary" onclick="event.stopPropagation(); toggleKuismachineDetails(${index}, event)">Details</button></td>
+            </tr>
+            <tr id="kuismachine-details-${index}" class="expanded-details-row" style="display: none;">
+                <td colspan="5" class="expanded-details">
+                    <h4>Kuismachine Log Details</h4>
+                    <div class="expanded-details-content">
+                        <div class="detail-item">
+                            <div class="detail-label">Datum/Tijd</div>
+                            <div class="detail-value">${escapeHtml(dateStr)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gebruiker</div>
+                            <div class="detail-value">${escapeHtml(log.userName)}</div>
+                        </div>
+                        
+                        ${log.kuismachineGebruikt ? `
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <div class="detail-label" style="font-weight: 600; font-size: 1.1rem; margin-top: 16px; margin-bottom: 8px; border-top: 2px solid #e0e0e0; padding-top: 16px;">🧹 Kuismachine</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gebruikt</div>
+                            <div class="detail-value"><span class="badge badge-yes">Ja</span></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Pistes gekuist</div>
+                            <div class="detail-value">${log.kuismachinePisteA && log.kuismachinePisteB ? 'A & B' : log.kuismachinePisteA ? 'A' : log.kuismachinePisteB ? 'B' : 'Geen'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Begintijd</div>
+                            <div class="detail-value">${escapeHtml(log.kuismachineBegintijd || '-')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Eindtijd</div>
+                            <div class="detail-value">${escapeHtml(log.kuismachineEindtijd || '-')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Uitgekuist</div>
+                            <div class="detail-value">${log.kuismachineUitgekuist ? '<span class="badge badge-yes">Ja</span>' : '<span class="badge badge-no">Nee</span>'}</div>
+                        </div>
+                        ${log.kuismachineReden ? `
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <div class="detail-label">Commentaar (niet uitgekuist)</div>
+                            <div class="detail-value">${escapeHtml(log.kuismachineReden)}</div>
+                        </div>
+                        ` : ''}
+                        ` : `
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <div class="detail-label" style="font-weight: 600; font-size: 1.1rem; margin-top: 16px; margin-bottom: 8px; border-top: 2px solid #e0e0e0; padding-top: 16px;">🧹 Kuismachine</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gebruikt</div>
+                            <div class="detail-value"><span class="badge badge-no">Nee</span></div>
+                        </div>
+                        ${log.kuismachineNietGebruiktReden ? `
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <div class="detail-label">Reden niet gebruikt</div>
+                            <div class="detail-value">${escapeHtml(log.kuismachineNietGebruiktReden)}</div>
+                        </div>
+                        ` : ''}
+                        `}
+                        
+                        ${log.stofzuigerGebruikt ? `
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <div class="detail-label" style="font-weight: 600; font-size: 1.1rem; margin-top: 16px; margin-bottom: 8px; border-top: 2px solid #e0e0e0; padding-top: 16px;">💨 Stofzuiger</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gebruikt</div>
+                            <div class="detail-value"><span class="badge badge-yes">Ja</span></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Pistes gekuist</div>
+                            <div class="detail-value">${log.stofzuigerPisteA && log.stofzuigerPisteB ? 'A & B' : log.stofzuigerPisteA ? 'A' : log.stofzuigerPisteB ? 'B' : 'Geen'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Begintijd</div>
+                            <div class="detail-value">${escapeHtml(log.stofzuigerBegintijd || '-')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Eindtijd</div>
+                            <div class="detail-value">${escapeHtml(log.stofzuigerEindtijd || '-')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Uitgekuist</div>
+                            <div class="detail-value">${log.stofzuigerUitgekuist ? '<span class="badge badge-yes">Ja</span>' : '<span class="badge badge-no">Nee</span>'}</div>
+                        </div>
+                        ${log.stofzuigerReden ? `
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <div class="detail-label">Commentaar (niet uitgekuist)</div>
+                            <div class="detail-value">${escapeHtml(log.stofzuigerReden)}</div>
+                        </div>
+                        ` : ''}
+                        ` : `
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <div class="detail-label" style="font-weight: 600; font-size: 1.1rem; margin-top: 16px; margin-bottom: 8px; border-top: 2px solid #e0e0e0; padding-top: 16px;">💨 Stofzuiger</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gebruikt</div>
+                            <div class="detail-value"><span class="badge badge-no">Nee</span></div>
+                        </div>
+                        ${log.stofzuigerNietGebruiktReden ? `
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <div class="detail-label">Reden niet gebruikt</div>
+                            <div class="detail-value">${escapeHtml(log.stofzuigerNietGebruiktReden)}</div>
+                        </div>
+                        ` : ''}
+                        `}
+                    </div>
+                </td>
             </tr>
         `;
     }).join('');
+}
+
+/**
+ * Toggle kuismachine details
+ */
+function toggleKuismachineDetails(index, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    const detailsRow = document.getElementById(`kuismachine-details-${index}`);
+    if (detailsRow) {
+        detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
+    }
 }
 
 /**
