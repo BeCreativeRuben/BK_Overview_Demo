@@ -39,95 +39,117 @@
                 <button class="overlay-close" onclick="closeKuismachineOverlay()">&times;</button>
             </div>
             <form id="kuismachine-form" onsubmit="handleKuismachineSubmit(event)">
-                <div class="machine-section">
-                    <h3>Kuismachine</h3>
-                    <div class="form-group checkbox-group">
-                        <label>
-                            <input type="checkbox" id="kuismachine-gebruikt" name="kuismachineGebruikt" onchange="toggleMachineSection('kuismachine')">
-                            Kuismachine gebruikt
-                        </label>
-                    </div>
-                    <div id="kuismachine-fields" class="machine-fields" style="display: none;">
-                        <div class="form-group">
-                            <label>Pistes gekuist:</label>
-                            <div class="checkbox-group">
-                                <label>
-                                    <input type="checkbox" id="kuismachine-piste-a" name="kuismachinePisteA">
-                                    Piste A
-                                </label>
-                                <label>
-                                    <input type="checkbox" id="kuismachine-piste-b" name="kuismachinePisteB">
-                                    Piste B
+                <div class="machine-sections-container">
+                    <div class="machine-section">
+                        <div class="machine-section-header">
+                            <h3>🧹 Kuismachine</h3>
+                            <div class="form-group checkbox-group">
+                                <label class="machine-checkbox-label">
+                                    <input type="checkbox" id="kuismachine-gebruikt" name="kuismachineGebruikt" onchange="toggleMachineSection('kuismachine')">
+                                    <span>Gebruikt</span>
                                 </label>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="kuismachine-begintijd">Begintijd <span class="required">*</span></label>
-                            <input type="text" id="kuismachine-begintijd" name="kuismachineBegintijd" placeholder="bijv. 210,3 of 210.3" pattern="^[0-9]+([,\.][0-9]+)?$">
-                            <small class="form-hint">Format: xxx,x (bijv. 210,3)</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="kuismachine-eindtijd">Eindtijd <span class="required">*</span></label>
-                            <input type="text" id="kuismachine-eindtijd" name="kuismachineEindtijd" placeholder="bijv. 210,3 of 210.3" pattern="^[0-9]+([,\.][0-9]+)?$">
-                            <small class="form-hint">Format: xxx,x (bijv. 210,3)</small>
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <label>
-                                <input type="checkbox" id="kuismachine-uitgekuist" name="kuismachineUitgekuist" onchange="toggleUitgekuistFields('kuismachine')">
-                                Machine uitgekuist
-                            </label>
-                        </div>
-                        <div id="kuismachine-reden-fields" class="reden-fields">
+                        <div id="kuismachine-fields" class="machine-fields" style="display: none;">
                             <div class="form-group">
-                                <label for="kuismachine-reden">Commentaar <span id="kuismachine-reden-required" class="required">*</span></label>
-                                <textarea id="kuismachine-reden" name="kuismachineReden" rows="3" placeholder="Geef een commentaar op (verplicht indien machine niet uitgekuist)..."></textarea>
+                                <label>Pistes gekuist:</label>
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="kuismachine-piste-a" name="kuismachinePisteA">
+                                        Piste A
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" id="kuismachine-piste-b" name="kuismachinePisteB">
+                                        Piste B
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="kuismachine-begintijd">Begintijd <span class="required">*</span></label>
+                                <input type="text" id="kuismachine-begintijd" name="kuismachineBegintijd" placeholder="bijv. 210,3 of 210.3" pattern="^[0-9]+([,\.][0-9]+)?$">
+                                <small class="form-hint">Format: xxx,x (bijv. 210,3)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="kuismachine-eindtijd">Eindtijd <span class="required">*</span></label>
+                                <input type="text" id="kuismachine-eindtijd" name="kuismachineEindtijd" placeholder="bijv. 210,3 of 210.3" pattern="^[0-9]+([,\.][0-9]+)?$">
+                                <small class="form-hint">Format: xxx,x (bijv. 210,3)</small>
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="kuismachine-uitgekuist" name="kuismachineUitgekuist" onchange="toggleUitgekuistFields('kuismachine')">
+                                    Machine uitgekuist
+                                </label>
+                            </div>
+                            <div id="kuismachine-reden-fields" class="reden-fields">
+                                <div class="form-group">
+                                    <label for="kuismachine-reden">Commentaar <span id="kuismachine-reden-required" class="required">*</span></label>
+                                    <textarea id="kuismachine-reden" name="kuismachineReden" rows="3" placeholder="Geef een commentaar op (verplicht indien machine niet uitgekuist)..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="kuismachine-niet-gebruikt-reason" class="niet-gebruikt-reason" style="display: none;">
+                            <div class="form-group">
+                                <label for="kuismachine-niet-gebruikt-reden">Waarom niet gebruikt? <span class="required">*</span></label>
+                                <textarea id="kuismachine-niet-gebruikt-reden" name="kuismachineNietGebruiktReden" rows="2" placeholder="Geef een reden waarom de kuismachine niet gebruikt is..."></textarea>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="machine-section">
-                    <h3>Stofzuiger</h3>
-                    <div class="form-group checkbox-group">
-                        <label>
-                            <input type="checkbox" id="stofzuiger-gebruikt" name="stofzuigerGebruikt" onchange="toggleMachineSection('stofzuiger')">
-                            Stofzuiger gebruikt
-                        </label>
+                    <div class="machine-section-divider">
+                        <span>OF</span>
                     </div>
-                    <div id="stofzuiger-fields" class="machine-fields" style="display: none;">
-                        <div class="form-group">
-                            <label>Pistes gekuist:</label>
-                            <div class="checkbox-group">
-                                <label>
-                                    <input type="checkbox" id="stofzuiger-piste-a" name="stofzuigerPisteA">
-                                    Piste A
-                                </label>
-                                <label>
-                                    <input type="checkbox" id="stofzuiger-piste-b" name="stofzuigerPisteB">
-                                    Piste B
+
+                    <div class="machine-section">
+                        <div class="machine-section-header">
+                            <h3>💨 Stofzuiger</h3>
+                            <div class="form-group checkbox-group">
+                                <label class="machine-checkbox-label">
+                                    <input type="checkbox" id="stofzuiger-gebruikt" name="stofzuigerGebruikt" onchange="toggleMachineSection('stofzuiger')">
+                                    <span>Gebruikt</span>
                                 </label>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="stofzuiger-begintijd">Begintijd <span class="required">*</span></label>
-                            <input type="text" id="stofzuiger-begintijd" name="stofzuigerBegintijd" placeholder="bijv. 42,2 of 42.2" pattern="^[0-9]+([,\.][0-9]+)?$">
-                            <small class="form-hint">Format: xx,x (bijv. 42,2)</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="stofzuiger-eindtijd">Eindtijd <span class="required">*</span></label>
-                            <input type="text" id="stofzuiger-eindtijd" name="stofzuigerEindtijd" placeholder="bijv. 42,2 of 42.2" pattern="^[0-9]+([,\.][0-9]+)?$">
-                            <small class="form-hint">Format: xx,x (bijv. 42,2)</small>
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <label>
-                                <input type="checkbox" id="stofzuiger-uitgekuist" name="stofzuigerUitgekuist" onchange="toggleUitgekuistFields('stofzuiger')">
-                                Machine uitgekuist
-                            </label>
-                        </div>
-                        <div id="stofzuiger-reden-fields" class="reden-fields">
+                        <div id="stofzuiger-fields" class="machine-fields" style="display: none;">
                             <div class="form-group">
-                                <label for="stofzuiger-reden">Commentaar <span id="stofzuiger-reden-required" class="required">*</span></label>
-                                <textarea id="stofzuiger-reden" name="stofzuigerReden" rows="3" placeholder="Geef een commentaar op (verplicht indien machine niet uitgekuist)..."></textarea>
+                                <label>Pistes gekuist:</label>
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="stofzuiger-piste-a" name="stofzuigerPisteA">
+                                        Piste A
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" id="stofzuiger-piste-b" name="stofzuigerPisteB">
+                                        Piste B
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="stofzuiger-begintijd">Begintijd <span class="required">*</span></label>
+                                <input type="text" id="stofzuiger-begintijd" name="stofzuigerBegintijd" placeholder="bijv. 42,2 of 42.2" pattern="^[0-9]+([,\.][0-9]+)?$">
+                                <small class="form-hint">Format: xx,x (bijv. 42,2)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="stofzuiger-eindtijd">Eindtijd <span class="required">*</span></label>
+                                <input type="text" id="stofzuiger-eindtijd" name="stofzuigerEindtijd" placeholder="bijv. 42,2 of 42.2" pattern="^[0-9]+([,\.][0-9]+)?$">
+                                <small class="form-hint">Format: xx,x (bijv. 42,2)</small>
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="stofzuiger-uitgekuist" name="stofzuigerUitgekuist" onchange="toggleUitgekuistFields('stofzuiger')">
+                                    Machine uitgekuist
+                                </label>
+                            </div>
+                            <div id="stofzuiger-reden-fields" class="reden-fields">
+                                <div class="form-group">
+                                    <label for="stofzuiger-reden">Commentaar <span id="stofzuiger-reden-required" class="required">*</span></label>
+                                    <textarea id="stofzuiger-reden" name="stofzuigerReden" rows="3" placeholder="Geef een commentaar op (verplicht indien machine niet uitgekuist)..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="stofzuiger-niet-gebruikt-reason" class="niet-gebruikt-reason" style="display: none;">
+                            <div class="form-group">
+                                <label for="stofzuiger-niet-gebruikt-reden">Waarom niet gebruikt? <span class="required">*</span></label>
+                                <textarea id="stofzuiger-niet-gebruikt-reden" name="stofzuigerNietGebruiktReden" rows="2" placeholder="Geef een reden waarom de stofzuiger niet gebruikt is..."></textarea>
                             </div>
                         </div>
                     </div>

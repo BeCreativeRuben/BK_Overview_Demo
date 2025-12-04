@@ -65,6 +65,7 @@
                     <option value="clicks">Clicks</option>
                     <option value="kuismachine">Kuismachine</option>
                     <option value="kart-daily">Kart Daily</option>
+                    <option value="feedback">Feedback & Requests</option>
                 </select>
             </div>
             <div class="filter-group filter-search">
@@ -95,6 +96,10 @@
                 <div class="stat-label">Kart Daily Checks</div>
                 <div class="stat-value" id="stat-kart-daily">0</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-label">Feedback & Requests</div>
+                <div class="stat-value" id="stat-feedback">0</div>
+            </div>
         </div>
 
         <!-- Export knoppen -->
@@ -103,6 +108,7 @@
             <button class="btn-secondary" onclick="exportClickLogs()">Export Clicks</button>
             <button class="btn-secondary" onclick="exportKuismachineLogs()">Export Kuismachine</button>
             <button class="btn-secondary" onclick="exportKartDailyChecks()">Export Kart Daily</button>
+            <button class="btn-secondary" onclick="exportFeedback()">Export Feedback</button>
         </div>
 
         <!-- Tabs voor verschillende log types -->
@@ -110,6 +116,7 @@
             <button class="tab-button active" onclick="switchTab('clicks', event)">Click Logs</button>
             <button class="tab-button" onclick="switchTab('kuismachine', event)">Kuismachine Logs</button>
             <button class="tab-button" onclick="switchTab('kart-daily', event)">Kart Daily Checks</button>
+            <button class="tab-button" onclick="switchTab('feedback', event)">Feedback & Requests</button>
         </div>
 
         <!-- Click Logs Tabel -->
@@ -166,6 +173,26 @@
                         </tr>
                     </thead>
                     <tbody id="kart-daily-table-body">
+                        <tr><td colspan="5" class="loading">Laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Feedback & Requests Tabel -->
+        <div id="tab-feedback" class="tab-content">
+            <div class="table-container">
+                <table class="logs-table" id="feedback-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('feedback-table', 0)">Datum/Tijd ↑↓</th>
+                            <th onclick="sortTable('feedback-table', 1)">Type ↑↓</th>
+                            <th onclick="sortTable('feedback-table', 2)">Titel ↑↓</th>
+                            <th onclick="sortTable('feedback-table', 3)">Gebruiker ↑↓</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feedback-table-body">
                         <tr><td colspan="5" class="loading">Laden...</td></tr>
                     </tbody>
                 </table>

@@ -1195,12 +1195,28 @@ function openKuismachineOverlay(event) {
     // Verberg alle machine velden
     document.getElementById('kuismachine-fields').style.display = 'none';
     document.getElementById('stofzuiger-fields').style.display = 'none';
+    const kuismachineNietGebruiktReason = document.getElementById('kuismachine-niet-gebruikt-reason');
+    const stofzuigerNietGebruiktReason = document.getElementById('stofzuiger-niet-gebruikt-reason');
+    if (kuismachineNietGebruiktReason) kuismachineNietGebruiktReason.style.display = 'none';
+    if (stofzuigerNietGebruiktReason) stofzuigerNietGebruiktReason.style.display = 'none';
     
     // Reset uitgekuist checkboxes en reden velden
     document.getElementById('kuismachine-uitgekuist').checked = false;
     document.getElementById('stofzuiger-uitgekuist').checked = false;
     document.getElementById('kuismachine-reden').value = '';
     document.getElementById('stofzuiger-reden').value = '';
+    
+    // Reset niet-gebruikt reden velden
+    const kuismachineNietGebruiktReden = document.getElementById('kuismachine-niet-gebruikt-reden');
+    const stofzuigerNietGebruiktReden = document.getElementById('stofzuiger-niet-gebruikt-reden');
+    if (kuismachineNietGebruiktReden) {
+        kuismachineNietGebruiktReden.value = '';
+        kuismachineNietGebruiktReden.required = false;
+    }
+    if (stofzuigerNietGebruiktReden) {
+        stofzuigerNietGebruiktReden.value = '';
+        stofzuigerNietGebruiktReden.required = false;
+    }
     
     // Update required status voor reden velden
     toggleUitgekuistFields('kuismachine');
@@ -1226,10 +1242,25 @@ function closeKuismachineOverlay() {
 function toggleMachineSection(machineType) {
     const checkbox = document.getElementById(`${machineType}-gebruikt`);
     const fields = document.getElementById(`${machineType}-fields`);
+    const nietGebruiktReason = document.getElementById(`${machineType}-niet-gebruikt-reason`);
+    const nietGebruiktRedenInput = document.getElementById(`${machineType}-niet-gebruikt-reden`);
+    
+    // Check of de andere machine gebruikt wordt
+    const otherMachineType = machineType === 'kuismachine' ? 'stofzuiger' : 'kuismachine';
+    const otherMachineUsed = document.getElementById(`${otherMachineType}-gebruikt`).checked;
     
     if (checkbox.checked) {
+        // Machine wordt gebruikt - toon velden, verberg niet-gebruikt reden
         fields.style.display = 'block';
+        if (nietGebruiktReason) {
+            nietGebruiktReason.style.display = 'none';
+            if (nietGebruiktRedenInput) {
+                nietGebruiktRedenInput.required = false;
+                nietGebruiktRedenInput.value = '';
+            }
+        }
     } else {
+        // Machine wordt niet gebruikt
         fields.style.display = 'none';
         // Reset velden
         document.getElementById(`${machineType}-piste-a`).checked = false;
@@ -1240,6 +1271,59 @@ function toggleMachineSection(machineType) {
         document.getElementById(`${machineType}-reden`).value = '';
         // Reset required status
         toggleUitgekuistFields(machineType);
+        
+        // Als de andere machine ook niet gebruikt wordt, toon dan niet-gebruikt reden
+        // Als alleen deze machine niet gebruikt wordt, toon reden
+        if (!otherMachineUsed) {
+            // Beide machines niet gebruikt - geen reden nodig (beide zijn optioneel)
+            if (nietGebruiktReason) {
+                nietGebruiktReason.style.display = 'none';
+                if (nietGebruiktRedenInput) {
+                    nietGebruiktRedenInput.required = false;
+                    nietGebruiktRedenInput.value = '';
+                }
+            }
+        } else {
+            // Alleen deze machine niet gebruikt - reden verplicht
+            if (nietGebruiktReason) {
+                nietGebruiktReason.style.display = 'block';
+                if (nietGebruiktRedenInput) {
+                    nietGebruiktRedenInput.required = true;
+                }
+            }
+        }
+    }
+    
+    // Update de andere machine's niet-gebruikt reden veld ook
+    updateOtherMachineReasonField(otherMachineType);
+}
+
+/**
+ * Update het niet-gebruikt reden veld voor de andere machine
+ */
+function updateOtherMachineReasonField(machineType) {
+    const checkbox = document.getElementById(`${machineType}-gebruikt`);
+    const nietGebruiktReason = document.getElementById(`${machineType}-niet-gebruikt-reason`);
+    const nietGebruiktRedenInput = document.getElementById(`${machineType}-niet-gebruikt-reden`);
+    
+    if (!checkbox || !nietGebruiktReason) return;
+    
+    const otherMachineType = machineType === 'kuismachine' ? 'stofzuiger' : 'kuismachine';
+    const otherMachineUsed = document.getElementById(`${otherMachineType}-gebruikt`).checked;
+    
+    if (!checkbox.checked && otherMachineUsed) {
+        // Deze machine niet gebruikt, andere wel - reden verplicht
+        nietGebruiktReason.style.display = 'block';
+        if (nietGebruiktRedenInput) {
+            nietGebruiktRedenInput.required = true;
+        }
+    } else {
+        // Deze machine gebruikt OF beide niet gebruikt - geen reden nodig
+        nietGebruiktReason.style.display = 'none';
+        if (nietGebruiktRedenInput) {
+            nietGebruiktRedenInput.required = false;
+            nietGebruiktRedenInput.value = '';
+        }
     }
 }
 
@@ -1298,6 +1382,19 @@ function validateKuismachineForm(formData) {
     // Minimaal één machine moet gebruikt zijn
     if (!formData.kuismachineGebruikt && !formData.stofzuigerGebruikt) {
         errors.push('Selecteer minimaal één machine (kuismachine of stofzuiger)');
+    }
+    
+    // Als alleen één machine gebruikt wordt, moet er een reden zijn voor de andere
+    if (formData.kuismachineGebruikt && !formData.stofzuigerGebruikt) {
+        if (!formData.stofzuigerNietGebruiktReden || formData.stofzuigerNietGebruiktReden.trim() === '') {
+            errors.push('Geef een reden op waarom de stofzuiger niet gebruikt is');
+        }
+    }
+    
+    if (!formData.kuismachineGebruikt && formData.stofzuigerGebruikt) {
+        if (!formData.kuismachineNietGebruiktReden || formData.kuismachineNietGebruiktReden.trim() === '') {
+            errors.push('Geef een reden op waarom de kuismachine niet gebruikt is');
+        }
     }
     
     // Valideer kuismachine velden
@@ -1366,13 +1463,15 @@ async function handleKuismachineSubmit(event) {
         kuismachineEindtijd: document.getElementById('kuismachine-eindtijd').value.trim(),
         kuismachineUitgekuist: document.getElementById('kuismachine-uitgekuist').checked,
         kuismachineReden: document.getElementById('kuismachine-reden').value.trim(),
+        kuismachineNietGebruiktReden: document.getElementById('kuismachine-niet-gebruikt-reden')?.value.trim() || '',
         stofzuigerGebruikt: document.getElementById('stofzuiger-gebruikt').checked,
         stofzuigerPisteA: document.getElementById('stofzuiger-piste-a').checked,
         stofzuigerPisteB: document.getElementById('stofzuiger-piste-b').checked,
         stofzuigerBegintijd: document.getElementById('stofzuiger-begintijd').value.trim(),
         stofzuigerEindtijd: document.getElementById('stofzuiger-eindtijd').value.trim(),
         stofzuigerUitgekuist: document.getElementById('stofzuiger-uitgekuist').checked,
-        stofzuigerReden: document.getElementById('stofzuiger-reden').value.trim()
+        stofzuigerReden: document.getElementById('stofzuiger-reden').value.trim(),
+        stofzuigerNietGebruiktReden: document.getElementById('stofzuiger-niet-gebruikt-reden')?.value.trim() || ''
     };
     
     // Valideer

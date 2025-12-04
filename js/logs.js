@@ -8,13 +8,15 @@ const AUTH_STORAGE_KEY = 'logs_authenticated';
 let allLogs = {
     clicks: [],
     kuismachine: [],
-    kartDaily: []
+    kartDaily: [],
+    feedback: []
 };
 
 let filteredLogs = {
     clicks: [],
     kuismachine: [],
-    kartDaily: []
+    kartDaily: [],
+    feedback: []
 };
 
 let currentSort = {
@@ -117,6 +119,9 @@ async function loadAllLogs() {
         
         // Laad kart daily checks
         await loadKartDailyChecks(database, ref, get);
+        
+        // Laad feedback
+        await loadFeedback(database, ref, get);
         
         // Update filters en render
         populateUserFilter();
@@ -281,6 +286,45 @@ async function loadKartDailyChecks(database, ref, get) {
 }
 
 /**
+ * Laad feedback
+ */
+async function loadFeedback(database, ref, get) {
+    try {
+        const feedbackRef = ref(database, 'feedback');
+        const snapshot = await get(feedbackRef);
+        
+        allLogs.feedback = [];
+        
+        if (snapshot.exists()) {
+            const feedbackData = snapshot.val();
+            
+            Object.keys(feedbackData).forEach(feedbackId => {
+                const feedback = feedbackData[feedbackId];
+                allLogs.feedback.push({
+                    id: feedbackId,
+                    userName: feedback.userName || 'Anoniem',
+                    timestamp: feedback.timestamp || 0,
+                    dateTime: feedback.dateTime || '',
+                    type: feedback.type || 'other',
+                    title: feedback.title || '',
+                    description: feedback.description || '',
+                    email: feedback.email || null,
+                    userAgent: feedback.userAgent || '',
+                    url: feedback.url || '',
+                    feedbackType: 'feedback'
+                });
+            });
+        }
+        
+        // Sorteer op timestamp (nieuwste eerst)
+        allLogs.feedback.sort((a, b) => b.timestamp - a.timestamp);
+        
+    } catch (error) {
+        console.error('Error loading feedback:', error);
+    }
+}
+
+/**
  * Vul gebruiker filter dropdown
  */
 function populateUserFilter() {
@@ -361,10 +405,24 @@ function applyFilters() {
         return true;
     });
     
+    // Filter feedback
+    filteredLogs.feedback = allLogs.feedback.filter(log => {
+        if (typeFilter && typeFilter !== 'feedback') return false;
+        if (userFilter && log.userName !== userFilter) return false;
+        if (dateFrom && log.timestamp < new Date(dateFrom).getTime()) return false;
+        if (dateTo && log.timestamp > new Date(dateTo).getTime() + 86400000) return false;
+        if (searchInput) {
+            const searchText = `${log.userName} ${log.dateTime} ${log.title || ''} ${log.description || ''} ${log.type || ''}`.toLowerCase();
+            if (!searchText.includes(searchInput)) return false;
+        }
+        return true;
+    });
+    
     // Render tabellen
     renderClickLogsTable();
     renderKuismachineLogsTable();
     renderKartDailyChecksTable();
+    renderFeedbackTable();
     
     // Update statistieken
     calculateStats();
@@ -696,6 +754,15 @@ function exportAllLogs() {
             'Aantal problemen': log.problemCount,
             'Alle karts gekuist': log.allKartsCleaned ? 'Ja' : 'Nee',
             'Algemene opmerkingen': log.generalComments || ''
+        })),
+        ...filteredLogs.feedback.map(feedback => ({
+            Type: 'Feedback',
+            Datum: new Date(feedback.timestamp).toLocaleString('nl-NL'),
+            'Feedback Type': feedback.type === 'bug' ? 'Bug' : feedback.type === 'feature' ? 'Feature Request' : feedback.type === 'improvement' ? 'Verbetering' : 'Anders',
+            Titel: feedback.title,
+            Beschrijving: feedback.description,
+            Gebruiker: feedback.userName,
+            Email: feedback.email || ''
         }))
     ];
     
@@ -755,6 +822,23 @@ function exportKartDailyChecks() {
     }));
     
     exportToCSV(data, `battlekart-kart-daily-${new Date().toISOString().split('T')[0]}.csv`);
+}
+
+/**
+ * Export feedback
+ */
+function exportFeedback() {
+    const data = filteredLogs.feedback.map(feedback => ({
+        Datum: new Date(feedback.timestamp).toLocaleString('nl-NL'),
+        Type: feedback.type === 'bug' ? 'Bug' : feedback.type === 'feature' ? 'Feature Request' : feedback.type === 'improvement' ? 'Verbetering' : 'Anders',
+        Titel: feedback.title,
+        Beschrijving: feedback.description,
+        Gebruiker: feedback.userName,
+        Email: feedback.email || '',
+        URL: feedback.url || ''
+    }));
+    
+    exportToCSV(data, `battlekart-feedback-${new Date().toISOString().split('T')[0]}.csv`);
 }
 
 /**
