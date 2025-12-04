@@ -657,6 +657,190 @@ header h1 {
     }
 }
 
+/* Tutorial Tour Overlay - Interactieve tour */
+.tutorial-tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: tutorialFadeIn 0.3s ease-out;
+}
+
+@keyframes tutorialFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.tutorial-spotlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(3px);
+    transition: clip-path 0.4s ease-out;
+    pointer-events: none;
+}
+
+.tutorial-tooltip {
+    position: fixed;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    animation: tooltipSlideIn 0.3s ease-out;
+    pointer-events: auto;
+}
+
+@keyframes tooltipSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.tutorial-tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 2px solid #e0e0e0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+}
+
+.tutorial-tooltip-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    color: white;
+}
+
+.tutorial-tooltip-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.tutorial-tooltip-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.tutorial-tooltip-content {
+    padding: 24px;
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.7;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.tutorial-tooltip-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-top: 2px solid #e0e0e0;
+    background: #f8f9fa;
+    border-radius: 0 0 16px 16px;
+    gap: 16px;
+}
+
+.tutorial-progress {
+    flex: 1;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.tutorial-step-indicator {
+    display: inline-block;
+}
+
+.tutorial-tooltip-footer .btn-primary,
+.tutorial-tooltip-footer .btn-secondary {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+.tutorial-tooltip-footer .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive voor tutorial tour */
+@media (max-width: 768px) {
+    .tutorial-tooltip {
+        max-width: 95%;
+        max-height: 85vh;
+    }
+    
+    .tutorial-tooltip-header {
+        padding: 16px 20px;
+    }
+    
+    .tutorial-tooltip-title {
+        font-size: 1.1rem;
+    }
+    
+    .tutorial-tooltip-content {
+        padding: 20px;
+        font-size: 0.95rem;
+    }
+    
+    .tutorial-tooltip-footer {
+        padding: 12px 20px;
+        flex-wrap: wrap;
+    }
+    
+    .tutorial-tooltip-footer .btn-primary,
+    .tutorial-tooltip-footer .btn-secondary {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .tutorial-progress {
+        order: 3;
+        width: 100%;
+        margin-top: 8px;
+    }
+}
+
 .dashboard {
     animation: fadeIn 0.5s ease-in;
 }

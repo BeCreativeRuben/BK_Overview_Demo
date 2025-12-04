@@ -1033,9 +1033,247 @@ function exportFeedback() {
 }
 
 /**
+ * Setup Firebase real-time listeners voor incremental updates
+ */
+function setupFirebaseListeners() {
+    if (!window.firebaseDatabase || !window.firebaseDatabaseFunctions) {
+        console.log('Firebase niet beschikbaar, geen real-time sync');
+        return;
+    }
+
+    const { ref, onValue } = window.firebaseDatabaseFunctions;
+    const database = window.firebaseDatabase;
+
+    try {
+        // Track welke log IDs we al hebben gezien (voor duplicate detection)
+        const seenLogIds = {
+            clicks: new Set(allLogs.clicks.map(log => `${log.toolId}_${log.id}`)),
+            kuismachine: new Set(allLogs.kuismachine.map(log => log.id)),
+            kartDaily: new Set(allLogs.kartDaily.map(log => log.id)),
+            feedback: new Set(allLogs.feedback.map(log => log.id))
+        };
+
+        // Listener voor nieuwe click logs - luister naar de hele logs tree
+        const clicksRef = ref(database, 'logs');
+        onValue(clicksRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const logsData = snapshot.val();
+                let hasNewLogs = false;
+
+                Object.keys(logsData).forEach(toolId => {
+                    // Skip kuismachine-logs en kart-daily-checks (hebben eigen listeners)
+                    if (toolId === 'kuismachine-logs' || toolId === 'kart-daily-checks') {
+                        return;
+                    }
+
+                    const toolLogs = logsData[toolId];
+                    if (!toolLogs) return;
+
+                    Object.keys(toolLogs).forEach(logId => {
+                        const log = toolLogs[logId];
+                        const logKey = `${toolId}_${logId}`;
+                        
+                        // Check of we deze log al hebben gezien
+                        if (!seenLogIds.clicks.has(logKey)) {
+                            const logTimestamp = log.timestamp || 0;
+                            
+                            allLogs.clicks.push({
+                                id: logId,
+                                toolId: toolId,
+                                userName: log.userName || 'Onbekend',
+                                timestamp: logTimestamp,
+                                dateTime: log.dateTime || '',
+                                type: 'clicks'
+                            });
+                            
+                            seenLogIds.clicks.add(logKey);
+                            hasNewLogs = true;
+                        }
+                    });
+                });
+
+                if (hasNewLogs) {
+                    allLogs.clicks.sort((a, b) => b.timestamp - a.timestamp);
+                    debouncedUpdate('clicks');
+                }
+            }
+        }, (error) => {
+            console.error('Error in clicks listener:', error);
+        });
+
+        // Listener voor nieuwe kuismachine logs
+        const kuismachineRef = ref(database, 'logs/kuismachine-logs');
+        onValue(kuismachineRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const logsData = snapshot.val();
+                let hasNewLogs = false;
+
+                Object.keys(logsData).forEach(logId => {
+                    if (!seenLogIds.kuismachine.has(logId)) {
+                        const log = logsData[logId];
+                        const logTimestamp = log.timestamp || 0;
+                        
+                        allLogs.kuismachine.push({
+                            id: logId,
+                            userName: log.userName || 'Onbekend',
+                            timestamp: logTimestamp,
+                            dateTime: log.dateTime || '',
+                            kuismachineGebruikt: log.kuismachineGebruikt || false,
+                            kuismachinePisteA: log.kuismachinePisteA || false,
+                            kuismachinePisteB: log.kuismachinePisteB || false,
+                            kuismachineUitgekuist: log.kuismachineUitgekuist || false,
+                            kuismachineBegintijd: log.kuismachineBegintijd || log.kuismachineStarttijd || '',
+                            kuismachineEindtijd: log.kuismachineEindtijd || '',
+                            kuismachineReden: log.kuismachineReden || '',
+                            kuismachineNietGebruiktReden: log.kuismachineNietGebruiktReden || '',
+                            stofzuigerGebruikt: log.stofzuigerGebruikt || false,
+                            stofzuigerPisteA: log.stofzuigerPisteA || false,
+                            stofzuigerPisteB: log.stofzuigerPisteB || false,
+                            stofzuigerUitgekuist: log.stofzuigerUitgekuist || false,
+                            stofzuigerBegintijd: log.stofzuigerBegintijd || log.stofzuigerStarttijd || '',
+                            stofzuigerEindtijd: log.stofzuigerEindtijd || '',
+                            stofzuigerReden: log.stofzuigerReden || '',
+                            stofzuigerNietGebruiktReden: log.stofzuigerNietGebruiktReden || '',
+                            type: 'kuismachine'
+                        });
+                        
+                        seenLogIds.kuismachine.add(logId);
+                        hasNewLogs = true;
+                    }
+                });
+
+                if (hasNewLogs) {
+                    allLogs.kuismachine.sort((a, b) => b.timestamp - a.timestamp);
+                    debouncedUpdate('kuismachine');
+                }
+            }
+        }, (error) => {
+            console.error('Error in kuismachine listener:', error);
+        });
+
+        // Listener voor nieuwe kart daily checks
+        const kartDailyRef = ref(database, 'logs/kart-daily-checks');
+        onValue(kartDailyRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const logsData = snapshot.val();
+                let hasNewLogs = false;
+
+                Object.keys(logsData).forEach(dateString => {
+                    const dateLogs = logsData[dateString];
+                    if (!dateLogs) return;
+                    
+                    Object.keys(dateLogs).forEach(logId => {
+                        if (!seenLogIds.kartDaily.has(logId)) {
+                            const log = dateLogs[logId];
+                            const logTimestamp = log.timestamp || 0;
+                            
+                            const karts = log.karts || {};
+                            const kartProblems = Object.keys(karts)
+                                .filter(kartNum => karts[kartNum] && karts[kartNum].hasProblem)
+                                .map(kartNum => ({
+                                    number: parseInt(kartNum),
+                                    reason: karts[kartNum].reason || '',
+                                    comments: karts[kartNum].comments || ''
+                                }));
+
+                            allLogs.kartDaily.push({
+                                id: logId,
+                                userName: log.userName || 'Onbekend',
+                                timestamp: logTimestamp,
+                                dateTime: log.dateTime || '',
+                                dateString: dateString,
+                                problemCount: kartProblems.length,
+                                kartProblems: kartProblems,
+                                allKartsCleaned: log.allKartsCleaned || false,
+                                generalComments: log.generalComments || '',
+                                type: 'kart-daily'
+                            });
+                            
+                            seenLogIds.kartDaily.add(logId);
+                            hasNewLogs = true;
+                        }
+                    });
+                });
+
+                if (hasNewLogs) {
+                    allLogs.kartDaily.sort((a, b) => b.timestamp - a.timestamp);
+                    debouncedUpdate('kart-daily');
+                }
+            }
+        }, (error) => {
+            console.error('Error in kart daily listener:', error);
+        });
+
+        // Listener voor nieuwe feedback
+        const feedbackRef = ref(database, 'feedback');
+        onValue(feedbackRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const feedbackData = snapshot.val();
+                let hasNewLogs = false;
+
+                Object.keys(feedbackData).forEach(feedbackId => {
+                    if (!seenLogIds.feedback.has(feedbackId)) {
+                        const feedback = feedbackData[feedbackId];
+                        const logTimestamp = feedback.timestamp || 0;
+                        
+                        allLogs.feedback.push({
+                            id: feedbackId,
+                            userName: feedback.userName || 'Anoniem',
+                            timestamp: logTimestamp,
+                            dateTime: feedback.dateTime || '',
+                            type: feedback.type || 'other',
+                            title: feedback.title || '',
+                            description: feedback.description || '',
+                            email: feedback.email || null,
+                            userAgent: feedback.userAgent || '',
+                            url: feedback.url || '',
+                            feedbackType: 'feedback'
+                        });
+                        
+                        seenLogIds.feedback.add(feedbackId);
+                        hasNewLogs = true;
+                    }
+                });
+
+                if (hasNewLogs) {
+                    allLogs.feedback.sort((a, b) => b.timestamp - a.timestamp);
+                    debouncedUpdate('feedback');
+                }
+            }
+        }, (error) => {
+            console.error('Error in feedback listener:', error);
+        });
+
+        console.log('Firebase real-time listeners voor logs pagina actief');
+    } catch (error) {
+        console.error('Error setting up Firebase listeners:', error);
+    }
+}
+
+/**
+ * Debounced update functie - wacht tot updates stoppen voordat UI wordt geüpdatet
+ */
+function debouncedUpdate(logType) {
+    // Clear bestaande timer
+    if (updateDebounceTimer) {
+        clearTimeout(updateDebounceTimer);
+    }
+
+    // Set nieuwe timer
+    updateDebounceTimer = setTimeout(() => {
+        // Update alleen de relevante filters en tabellen
+        populateUserFilter();
+        applyFilters();
+        calculateStats();
+        updateDebounceTimer = null;
+    }, UPDATE_DEBOUNCE_MS);
+}
+
+/**
  * Escape HTML
  */
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;

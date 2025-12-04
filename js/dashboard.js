@@ -136,26 +136,41 @@ const tutorials = {
             {
                 title: 'Waarom invullen?',
                 content: 'De kuismachine logs helpen ons om bij te houden wanneer de pistes zijn gekuist, welke machines zijn gebruikt, en of ze correct zijn onderhouden. Dit is belangrijk voor kwaliteit en veiligheid.',
-                image: 'https://via.placeholder.com/800x400?text=Placeholder+Screenshot+Kuismachine+1'
+                image: null
+            },
+            {
+                title: 'Hoe lees je de kuismachine display af?',
+                content: 'Op de kuismachine vind je het display in het midden van het control panel, naast de VIPER logo. Het display toont groene cijfers zoals "023.19". Dit is het aantal uren dat de machine heeft gedraaid.\n\nNoteer dit cijfer VOOR je begint met kuisen (begintijd) en NA je klaar bent (eindtijd). Je kunt zowel komma als punt gebruiken (023.19 of 023,19), maar het wordt opgeslagen met komma.',
+                image: 'images/tutorials/kuismachine-display.jpg'
+            },
+            {
+                title: 'Hoe lees je de stofzuiger display af?',
+                content: 'Op de stofzuiger vind je het display rechts op het control panel. Het display toont "HOURS" bovenaan en een cijfer zoals "50.3" (50 uur en 3 tienden).\n\nNoteer dit cijfer VOOR je begint met stofzuigen (begintijd) en NA je klaar bent (eindtijd). Het format is meestal xx.x (bijv. 50.3), maar je kunt ook komma gebruiken (50,3).',
+                image: 'images/tutorials/stofzuiger-display-closeup.jpg'
+            },
+            {
+                title: 'Waar vind je het stofzuiger display?',
+                content: 'Het display bevindt zich op het control panel aan de linkerkant van de machine. Je ziet het "HOURS" display met het cijfer eronder. Zorg dat je het display goed kunt zien voordat je begint.',
+                image: 'images/tutorials/stofzuiger-display-overview.jpg'
             },
             {
                 title: 'Stap 1: Open de overlay',
                 content: 'Klik op "Ga naar tool" bij Kuismachine logs om de invoer overlay te openen.',
-                image: 'https://via.placeholder.com/800x400?text=Placeholder+Screenshot+Kuismachine+2'
+                image: null
             },
             {
                 title: 'Stap 2: Vul de gegevens in',
-                content: 'Geef aan welke machines je hebt gebruikt (kuismachine en/of stofzuiger), welke pistes je hebt gekuist (A en/of B), en of je de machines daarna hebt uitgekuist. Vul ook de start- en eindtijden in van de machine displays.',
-                image: 'https://via.placeholder.com/800x400?text=Placeholder+Screenshot+Kuismachine+3'
+                content: 'Geef aan welke machines je hebt gebruikt (kuismachine en/of stofzuiger), welke pistes je hebt gekuist (A en/of B), en of je de machines daarna hebt uitgekuist. Vul ook de start- en eindtijden in die je van de machine displays hebt afgelezen.',
+                image: null
             },
             {
                 title: 'Stap 3: Reden indien niet uitgekuist',
                 content: 'Als je een machine niet hebt uitgekuist, is het verplicht om een reden op te geven. Dit helpt bij planning en communicatie.',
-                image: 'https://via.placeholder.com/800x400?text=Placeholder+Screenshot+Kuismachine+4'
+                image: null
             },
             {
                 title: 'Tips',
-                content: '• Vul de logs direct in na het kuisen\n• Controleer de machine displays voor de juiste tijden\n• Geef altijd een duidelijke reden als je niet kunt uitkuisen',
+                content: '• Vul de logs direct in na het kuisen\n• Controleer de machine displays voor de juiste tijden\n• Noteer zowel begintijd als eindtijd van de displays\n• Geef altijd een duidelijke reden als je niet kunt uitkuisen',
                 image: null
             }
         ]
@@ -227,6 +242,84 @@ const tutorials = {
             }
         ]
     }
+};
+
+// Algemene tutorial data voor het hele dashboard
+const generalTutorial = {
+    title: 'Battlekart Dashboard - Algemene Tutorial',
+    description: 'Leer hoe je het dashboard gebruikt',
+    steps: [
+        {
+            title: 'Welkom bij Battlekart Dashboard',
+            content: 'Dit dashboard helpt je om alle dagelijkse en wekelijkse taken bij te houden. Laten we beginnen met een korte rondleiding!',
+            target: null,
+            position: 'center',
+            highlight: 'none'
+        },
+        {
+            title: 'Naam Invoer',
+            content: 'Voordat je het dashboard kunt gebruiken, moet je je naam invoeren. Dit helpt ons om te zien wie welke taken heeft uitgevoerd. Je naam wordt opgeslagen en je hoeft deze niet elke keer opnieuw in te voeren. Na 3 minuten inactiviteit moet je opnieuw inloggen.',
+            target: '#name-modal',
+            position: 'center',
+            highlight: 'element'
+        },
+        {
+            title: 'Dashboard Overzicht',
+            content: 'Het dashboard bestaat uit verschillende secties: de header bovenaan met quick links, de dagplanning, de tool blokjes voor dagelijkse en wekelijkse taken, en de footer onderaan voor feedback.',
+            target: '.dashboard',
+            position: 'top',
+            highlight: 'section'
+        },
+        {
+            title: 'Dagplanning',
+            content: 'De dagplanning toont alle taken die je vandaag moet uitvoeren, opgedeeld in "Opening", "Doorheen de dag" en "Sluiting". Je kunt de planning inklappen/uitklappen. Klik op een taak om direct naar de bijbehorende tool te gaan. Vink taken af als je ze hebt voltooid.',
+            target: '#day-planning',
+            position: 'bottom',
+            highlight: 'element'
+        },
+        {
+            title: 'Tool Blokjes',
+            content: 'Elk tool blokje vertegenwoordigt een document of tool die je moet gebruiken. Je ziet wanneer er voor het laatst op is geklikt ("X geleden") en door wie. De groene/rode badges tonen of het een dagelijkse of wekelijkse taak is.',
+            target: '.tool-card',
+            position: 'top',
+            highlight: 'element'
+        },
+        {
+            title: 'Real-time Synchronisatie',
+            content: 'Het dashboard synchroniseert automatisch met andere devices. Als iemand anders op een tool klikt, zie je dit direct op je scherm. Dit zorgt ervoor dat iedereen altijd de meest actuele informatie ziet.',
+            target: '.tools-container',
+            position: 'top',
+            highlight: 'section'
+        },
+        {
+            title: 'Tool Specifieke Tutorials',
+            content: 'Bij elk tool blokje vind je een vraagteken knop (?) in de rechterbovenhoek. Klik hierop voor gedetailleerde instructies over hoe je dat specifieke document of tool gebruikt.',
+            target: '.tool-tutorial-btn',
+            position: 'left',
+            highlight: 'element'
+        },
+        {
+            title: 'Quick Links in Header',
+            content: 'In de header vind je snelle links naar Outlook, BK Panel en BK Website. Deze zijn altijd beschikbaar, ongeacht waar je je op het dashboard bevindt.',
+            target: '.header-links',
+            position: 'bottom',
+            highlight: 'element'
+        },
+        {
+            title: 'Feedback Geven',
+            content: 'Onderaan het dashboard vind je een footer met een feedback knop. Als je problemen tegenkomt of suggesties hebt, klik hierop om een melding in te dienen. Dit helpt ons om het dashboard te verbeteren.',
+            target: '.app-footer',
+            position: 'top',
+            highlight: 'element'
+        },
+        {
+            title: 'Tips & Best Practices',
+            content: '• Vul taken direct in nadat je ze hebt uitgevoerd\n• Controleer regelmatig de "X geleden" tags om te zien wat recent is gedaan\n• Gebruik de vraagteken knoppen als je niet zeker weet hoe iets werkt\n• Geef altijd feedback als je problemen tegenkomt\n• Log uit als je klaar bent (na 3 minuten gebeurt dit automatisch)',
+            target: null,
+            position: 'center',
+            highlight: 'none'
+        }
+    ]
 };
 
 // Easter egg boodschappen
@@ -804,13 +897,306 @@ function handleQuickLinkClick(linkId) {
     saveClickLog(linkId, now);
 }
 
+// Tutorial tour state
+let currentTutorialStep = 0;
+let tutorialActive = false;
+let tutorialOverlay = null;
+
 /**
- * Open help tutorial (placeholder voor toekomstige implementatie)
+ * Open help tutorial - start de algemene tutorial tour
  */
 function openHelpTutorial() {
-    // Placeholder functie - wordt later geïmplementeerd
-    alert('Hulp & Tutorial functie komt binnenkort beschikbaar!');
-    // TODO: Implementeer interactieve tutorial overlay
+    if (tutorialActive) {
+        return; // Tutorial is al actief
+    }
+    startGeneralTutorial();
+}
+
+/**
+ * Start de algemene tutorial tour
+ */
+function startGeneralTutorial() {
+    if (!generalTutorial || !generalTutorial.steps || generalTutorial.steps.length === 0) {
+        console.error('Geen tutorial data beschikbaar');
+        return;
+    }
+
+    tutorialActive = true;
+    currentTutorialStep = 0;
+    
+    // Maak overlay aan
+    createTutorialOverlay();
+    
+    // Toon eerste stap
+    showTutorialStep(0);
+    
+    // Voeg keyboard listeners toe
+    document.addEventListener('keydown', handleTutorialKeyboard);
+}
+
+/**
+ * Maak de tutorial overlay aan
+ */
+function createTutorialOverlay() {
+    // Verwijder bestaande overlay als die er is
+    const existing = document.getElementById('tutorial-tour-overlay');
+    if (existing) {
+        existing.remove();
+    }
+
+    // Maak nieuwe overlay
+    tutorialOverlay = document.createElement('div');
+    tutorialOverlay.id = 'tutorial-tour-overlay';
+    tutorialOverlay.className = 'tutorial-tour-overlay';
+    tutorialOverlay.innerHTML = `
+        <div class="tutorial-spotlight"></div>
+        <div class="tutorial-tooltip" data-position="center">
+            <div class="tutorial-tooltip-header">
+                <h3 class="tutorial-tooltip-title"></h3>
+                <button class="tutorial-tooltip-close" onclick="closeGeneralTutorial()" aria-label="Sluiten">&times;</button>
+            </div>
+            <div class="tutorial-tooltip-content"></div>
+            <div class="tutorial-tooltip-footer">
+                <button class="btn-secondary" onclick="previousTutorialStep()" id="tutorial-prev-btn">Vorige</button>
+                <div class="tutorial-progress">
+                    <span class="tutorial-step-indicator">Stap <span id="tutorial-current-step">1</span> van <span id="tutorial-total-steps">10</span></span>
+                </div>
+                <button class="btn-primary" onclick="nextTutorialStep()" id="tutorial-next-btn">Volgende</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(tutorialOverlay);
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Toon een specifieke tutorial stap
+ */
+function showTutorialStep(stepIndex) {
+    if (!generalTutorial || !generalTutorial.steps || stepIndex < 0 || stepIndex >= generalTutorial.steps.length) {
+        console.error('Ongeldige tutorial stap:', stepIndex);
+        return;
+    }
+
+    currentTutorialStep = stepIndex;
+    const step = generalTutorial.steps[stepIndex];
+    
+    // Update tooltip content
+    const titleEl = tutorialOverlay.querySelector('.tutorial-tooltip-title');
+    const contentEl = tutorialOverlay.querySelector('.tutorial-tooltip-content');
+    const progressEl = document.getElementById('tutorial-current-step');
+    const totalStepsEl = document.getElementById('tutorial-total-steps');
+    const prevBtn = document.getElementById('tutorial-prev-btn');
+    const nextBtn = document.getElementById('tutorial-next-btn');
+    
+    if (titleEl) titleEl.textContent = step.title;
+    if (contentEl) {
+        contentEl.innerHTML = step.content.replace(/\n/g, '<br>');
+    }
+    if (progressEl) progressEl.textContent = stepIndex + 1;
+    if (totalStepsEl) totalStepsEl.textContent = generalTutorial.steps.length;
+    
+    // Update knoppen
+    if (prevBtn) {
+        prevBtn.disabled = stepIndex === 0;
+        prevBtn.style.opacity = stepIndex === 0 ? '0.5' : '1';
+    }
+    if (nextBtn) {
+        const isLastStep = stepIndex === generalTutorial.steps.length - 1;
+        nextBtn.textContent = isLastStep ? 'Afronden' : 'Volgende';
+    }
+    
+    // Update tooltip positie
+    const tooltip = tutorialOverlay.querySelector('.tutorial-tooltip');
+    if (tooltip) {
+        tooltip.setAttribute('data-position', step.position || 'center');
+    }
+    
+    // Highlight element
+    if (step.target && step.highlight !== 'none') {
+        highlightElement(step.target, step.position);
+    } else {
+        removeHighlight();
+        // Center tooltip voor geen highlight
+        if (tooltip) {
+            tooltip.style.position = 'fixed';
+            tooltip.style.top = '50%';
+            tooltip.style.left = '50%';
+            tooltip.style.transform = 'translate(-50%, -50%)';
+        }
+    }
+}
+
+/**
+ * Highlight een element met spotlight effect
+ */
+function highlightElement(selector, position) {
+    if (!selector) {
+        removeHighlight();
+        return;
+    }
+
+    const element = document.querySelector(selector);
+    if (!element) {
+        console.warn('Element niet gevonden:', selector);
+        removeHighlight();
+        return;
+    }
+
+    // Scroll naar element
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Wacht even voor scroll animatie
+    setTimeout(() => {
+        const rect = element.getBoundingClientRect();
+        const spotlight = tutorialOverlay.querySelector('.tutorial-spotlight');
+        const tooltip = tutorialOverlay.querySelector('.tutorial-tooltip');
+        
+        if (!spotlight || !tooltip) return;
+        
+        // Bereken spotlight positie en grootte
+        const padding = 10; // Extra padding rond element
+        const spotlightRect = {
+            top: rect.top - padding,
+            left: rect.left - padding,
+            width: rect.width + (padding * 2),
+            height: rect.height + (padding * 2)
+        };
+        
+        // Update spotlight met clip-path voor cutout effect
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        spotlight.style.clipPath = `polygon(
+            0% 0%, 
+            0% 100%, 
+            ${spotlightRect.left}px 100%, 
+            ${spotlightRect.left}px ${spotlightRect.top}px, 
+            ${spotlightRect.left + spotlightRect.width}px ${spotlightRect.top}px, 
+            ${spotlightRect.left + spotlightRect.width}px ${spotlightRect.top + spotlightRect.height}px, 
+            ${spotlightRect.left}px ${spotlightRect.top + spotlightRect.height}px, 
+            ${spotlightRect.left}px 100%, 
+            ${viewportWidth}px 100%, 
+            ${viewportWidth}px 0%
+        )`;
+        
+        // Positioneer tooltip
+        positionTooltip(tooltip, rect, position);
+    }, 300);
+}
+
+/**
+ * Positioneer tooltip relatief aan element
+ */
+function positionTooltip(tooltip, elementRect, position) {
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const padding = 20;
+    let top, left;
+    
+    switch (position) {
+        case 'top':
+            top = elementRect.top - tooltipRect.height - padding;
+            left = elementRect.left + (elementRect.width / 2) - (tooltipRect.width / 2);
+            break;
+        case 'bottom':
+            top = elementRect.bottom + padding;
+            left = elementRect.left + (elementRect.width / 2) - (tooltipRect.width / 2);
+            break;
+        case 'left':
+            top = elementRect.top + (elementRect.height / 2) - (tooltipRect.height / 2);
+            left = elementRect.left - tooltipRect.width - padding;
+            break;
+        case 'right':
+            top = elementRect.top + (elementRect.height / 2) - (tooltipRect.height / 2);
+            left = elementRect.right + padding;
+            break;
+        default: // center
+            top = window.innerHeight / 2 - tooltipRect.height / 2;
+            left = window.innerWidth / 2 - tooltipRect.width / 2;
+    }
+    
+    // Zorg dat tooltip binnen viewport blijft
+    top = Math.max(padding, Math.min(top, window.innerHeight - tooltipRect.height - padding));
+    left = Math.max(padding, Math.min(left, window.innerWidth - tooltipRect.width - padding));
+    
+    tooltip.style.position = 'fixed';
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+    tooltip.style.transform = 'none';
+}
+
+/**
+ * Verwijder alle highlights
+ */
+function removeHighlight() {
+    const spotlight = tutorialOverlay?.querySelector('.tutorial-spotlight');
+    if (spotlight) {
+        spotlight.style.clipPath = 'none';
+    }
+}
+
+/**
+ * Ga naar volgende tutorial stap
+ */
+function nextTutorialStep() {
+    if (currentTutorialStep < generalTutorial.steps.length - 1) {
+        showTutorialStep(currentTutorialStep + 1);
+    } else {
+        closeGeneralTutorial();
+    }
+}
+
+/**
+ * Ga naar vorige tutorial stap
+ */
+function previousTutorialStep() {
+    if (currentTutorialStep > 0) {
+        showTutorialStep(currentTutorialStep - 1);
+    }
+}
+
+/**
+ * Sluit de algemene tutorial
+ */
+function closeGeneralTutorial() {
+    tutorialActive = false;
+    currentTutorialStep = 0;
+    
+    // Verwijder keyboard listeners
+    document.removeEventListener('keydown', handleTutorialKeyboard);
+    
+    // Verwijder overlay
+    if (tutorialOverlay) {
+        tutorialOverlay.remove();
+        tutorialOverlay = null;
+    }
+    
+    document.body.style.overflow = '';
+}
+
+/**
+ * Handle keyboard events voor tutorial
+ */
+function handleTutorialKeyboard(event) {
+    if (!tutorialActive) return;
+    
+    switch (event.key) {
+        case 'Escape':
+            closeGeneralTutorial();
+            event.preventDefault();
+            break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+            nextTutorialStep();
+            event.preventDefault();
+            break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+            previousTutorialStep();
+            event.preventDefault();
+            break;
+    }
 }
 
 /**
