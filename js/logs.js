@@ -30,6 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
 });
 
+// Debounce timer voor updates
+let updateDebounceTimer = null;
+const UPDATE_DEBOUNCE_MS = 1000; // Wacht 1 seconde na laatste update
+
 /**
  * Controleer authenticatie status
  */
@@ -38,6 +42,7 @@ function checkAuthentication() {
     if (isAuthenticated) {
         showLogsContainer();
         loadAllLogs();
+        setupFirebaseListeners();
     } else {
         showPasswordModal();
     }
@@ -72,6 +77,7 @@ function handlePasswordSubmit(event) {
         hidePasswordModal();
         showLogsContainer();
         loadAllLogs();
+        setupFirebaseListeners();
         passwordInput.value = '';
         errorDiv.style.display = 'none';
     } else {
