@@ -1287,6 +1287,13 @@ function handleLinkClick(toolId, event) {
         return;
     }
     
+    // Speciale behandeling voor Daily Report - toon waarschuwing
+    if (toolId === 'daily-report') {
+        event.preventDefault();
+        showDailyReportWarning();
+        return;
+    }
+    
     // Log de klik tijd
     const now = new Date();
     
@@ -3129,6 +3136,51 @@ function closeFeedbackModal() {
         if (errorDiv) errorDiv.style.display = 'none';
         if (successDiv) successDiv.style.display = 'none';
     }, 300);
+}
+
+/**
+ * Toon Daily Report waarschuwing modal
+ */
+function showDailyReportWarning() {
+    const modal = document.getElementById('daily-report-warning-modal');
+    if (!modal) {
+        return;
+    }
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Sluit Daily Report waarschuwing modal
+ */
+function closeDailyReportWarning() {
+    const modal = document.getElementById('daily-report-warning-modal');
+    if (!modal) {
+        return;
+    }
+    
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+/**
+ * Ga door naar Daily Report document
+ */
+function proceedToDailyReport() {
+    // Sluit modal
+    closeDailyReportWarning();
+    
+    // Log de klik tijd
+    const now = new Date();
+    saveClickLog('daily-report', now);
+    updateLastClickDisplay('daily-report', now, currentUserName);
+    
+    // Open de link
+    const dailyReportTool = tools.find(t => t.id === 'daily-report');
+    if (dailyReportTool && dailyReportTool.url) {
+        window.open(dailyReportTool.url, '_blank');
+    }
 }
 
 /**

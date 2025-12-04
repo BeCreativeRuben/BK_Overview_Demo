@@ -272,6 +272,29 @@
         </footer>
     </div>
 
+    <!-- Daily Report Waarschuwing Modal -->
+    <div id="daily-report-warning-modal" class="name-modal" style="display: none;">
+        <div class="name-modal-backdrop" onclick="closeDailyReportWarning()"></div>
+        <div class="name-modal-content">
+            <div class="name-modal-header">
+                <h2>⚠️ Let op: Daily Report</h2>
+                <button class="overlay-close" onclick="closeDailyReportWarning()">&times;</button>
+            </div>
+            <div style="padding: 20px 0;">
+                <p style="margin-bottom: 16px; line-height: 1.6;">
+                    Om lange laadtijden te vermijden, open je het Word document <strong>het beste direct op je PC</strong> in plaats van via de browser.
+                </p>
+                <p style="margin-bottom: 16px; line-height: 1.6; color: #666; font-style: italic;">
+                    Dit wordt nog gefixt zodat het ook via de browser goed werkt.
+                </p>
+            </div>
+            <div class="name-modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeDailyReportWarning()">Annuleren</button>
+                <button type="button" class="btn-primary" onclick="proceedToDailyReport()">Doorgaan naar document</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Feedback Modal -->
     <div id="feedback-modal" class="name-modal" style="display: none;">
         <div class="name-modal-backdrop" onclick="closeFeedbackModal()"></div>
