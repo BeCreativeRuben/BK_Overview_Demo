@@ -280,8 +280,8 @@ const generalTutorial = {
         {
             title: 'Tool Blokjes',
             content: 'Elk tool blokje vertegenwoordigt een document of tool die je moet gebruiken. Je ziet wanneer er voor het laatst op is geklikt ("X geleden") en door wie. De groene/rode badges tonen of het een dagelijkse of wekelijkse taak is.',
-            target: '.tool-card',
-            position: 'top',
+            target: '.tool-card:first-child',
+            position: 'right',
             highlight: 'element'
         },
         {
@@ -1098,40 +1098,59 @@ function highlightElement(selector, position) {
  * Positioneer tooltip relatief aan element
  */
 function positionTooltip(tooltip, elementRect, position) {
-    const tooltipRect = tooltip.getBoundingClientRect();
-    const padding = 20;
-    let top, left;
-    
-    switch (position) {
-        case 'top':
-            top = elementRect.top - tooltipRect.height - padding;
-            left = elementRect.left + (elementRect.width / 2) - (tooltipRect.width / 2);
-            break;
-        case 'bottom':
-            top = elementRect.bottom + padding;
-            left = elementRect.left + (elementRect.width / 2) - (tooltipRect.width / 2);
-            break;
-        case 'left':
-            top = elementRect.top + (elementRect.height / 2) - (tooltipRect.height / 2);
-            left = elementRect.left - tooltipRect.width - padding;
-            break;
-        case 'right':
-            top = elementRect.top + (elementRect.height / 2) - (tooltipRect.height / 2);
-            left = elementRect.right + padding;
-            break;
-        default: // center
-            top = window.innerHeight / 2 - tooltipRect.height / 2;
-            left = window.innerWidth / 2 - tooltipRect.width / 2;
-    }
-    
-    // Zorg dat tooltip binnen viewport blijft
-    top = Math.max(padding, Math.min(top, window.innerHeight - tooltipRect.height - padding));
-    left = Math.max(padding, Math.min(left, window.innerWidth - tooltipRect.width - padding));
-    
-    tooltip.style.position = 'fixed';
-    tooltip.style.top = `${top}px`;
-    tooltip.style.left = `${left}px`;
-    tooltip.style.transform = 'none';
+    // Wacht even zodat tooltip volledig is gerenderd voor getBoundingClientRect
+    setTimeout(() => {
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const padding = 30; // Verhoogde padding om overlap te voorkomen
+        let top, left;
+        
+        switch (position) {
+            case 'top':
+                top = elementRect.top - tooltipRect.height - padding;
+                left = elementRect.left + (elementRect.width / 2) - (tooltipRect.width / 2);
+                // Als tooltip te hoog is, plaats onder element
+                if (top < padding) {
+                    top = elementRect.bottom + padding;
+                }
+                break;
+            case 'bottom':
+                top = elementRect.bottom + padding;
+                left = elementRect.left + (elementRect.width / 2) - (tooltipRect.width / 2);
+                // Als tooltip te laag is, plaats boven element
+                if (top + tooltipRect.height > window.innerHeight - padding) {
+                    top = elementRect.top - tooltipRect.height - padding;
+                }
+                break;
+            case 'left':
+                top = elementRect.top + (elementRect.height / 2) - (tooltipRect.height / 2);
+                left = elementRect.left - tooltipRect.width - padding;
+                // Als tooltip te ver links is, plaats rechts van element
+                if (left < padding) {
+                    left = elementRect.right + padding;
+                }
+                break;
+            case 'right':
+                top = elementRect.top + (elementRect.height / 2) - (tooltipRect.height / 2);
+                left = elementRect.right + padding;
+                // Als tooltip te ver rechts is, plaats links van element
+                if (left + tooltipRect.width > window.innerWidth - padding) {
+                    left = elementRect.left - tooltipRect.width - padding;
+                }
+                break;
+            default: // center
+                top = window.innerHeight / 2 - tooltipRect.height / 2;
+                left = window.innerWidth / 2 - tooltipRect.width / 2;
+        }
+        
+        // Zorg dat tooltip binnen viewport blijft (met extra marge)
+        top = Math.max(padding, Math.min(top, window.innerHeight - tooltipRect.height - padding));
+        left = Math.max(padding, Math.min(left, window.innerWidth - tooltipRect.width - padding));
+        
+        tooltip.style.position = 'fixed';
+        tooltip.style.top = `${top}px`;
+        tooltip.style.left = `${left}px`;
+        tooltip.style.transform = 'none';
+    }, 50);
 }
 
 /**
