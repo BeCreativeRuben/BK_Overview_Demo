@@ -1462,10 +1462,18 @@ async function handleKuismachineSubmit(event) {
     const stofzuigerNietGebruiktRedenEl = document.getElementById('stofzuiger-niet-gebruikt-reden');
     
     // Verwijder required attribute van verborgen velden om HTML5 validatie te voorkomen
-    if (kuismachineNietGebruiktReasonEl && kuismachineNietGebruiktReasonEl.style.display === 'none') {
+    // Gebruik getComputedStyle om ook CSS-hidden elementen te detecteren
+    const kuismachineNietGebruiktReasonStyle = kuismachineNietGebruiktReasonEl 
+        ? window.getComputedStyle(kuismachineNietGebruiktReasonEl).display 
+        : 'none';
+    const stofzuigerNietGebruiktReasonStyle = stofzuigerNietGebruiktReasonEl 
+        ? window.getComputedStyle(stofzuigerNietGebruiktReasonEl).display 
+        : 'none';
+
+    if (kuismachineNietGebruiktReasonStyle === 'none') {
         if (kuismachineNietGebruiktRedenEl) kuismachineNietGebruiktRedenEl.required = false;
     }
-    if (stofzuigerNietGebruiktReasonEl && stofzuigerNietGebruiktReasonEl.style.display === 'none') {
+    if (stofzuigerNietGebruiktReasonStyle === 'none') {
         if (stofzuigerNietGebruiktRedenEl) stofzuigerNietGebruiktRedenEl.required = false;
     }
     
@@ -1488,8 +1496,13 @@ async function handleKuismachineSubmit(event) {
         stofzuigerNietGebruiktReden: stofzuigerNietGebruiktRedenEl ? stofzuigerNietGebruiktRedenEl.value.trim() : ''
     };
     
+    // Debug logging
+    console.log('FormData:', formData);
+    console.log('Validating...');
+    
     // Valideer
     const errors = validateKuismachineForm(formData);
+    console.log('Validation errors:', errors);
     if (errors.length > 0) {
         errorDiv.textContent = errors.join('. ');
         errorDiv.style.display = 'block';
@@ -1517,7 +1530,18 @@ async function handleKuismachineSubmit(event) {
     }
     
     // Disable submit button
-    const submitButton = event.target.querySelector('button[type="submit"]');
+    // event.target kan het form zijn of de button zelf
+    const submitButton = event.target.tagName === 'FORM' 
+        ? event.target.querySelector('button[type="submit"]')
+        : event.target.closest('form')?.querySelector('button[type="submit"]');
+    
+    if (!submitButton) {
+        console.error('Submit button niet gevonden');
+        errorDiv.textContent = 'Fout: Submit button niet gevonden';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
     const originalText = submitButton.textContent;
     submitButton.disabled = true;
     submitButton.textContent = 'Opslaan...';
