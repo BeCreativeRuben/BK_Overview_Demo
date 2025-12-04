@@ -309,7 +309,7 @@ const generalTutorial = {
             title: 'Feedback Geven',
             content: 'Onderaan het dashboard vind je een footer met een feedback knop. Als je problemen tegenkomt of suggesties hebt, klik hierop om een melding in te dienen. Dit helpt ons om het dashboard te verbeteren.',
             target: '.footer-feedback-btn',
-            position: 'bottom',
+            position: 'top',
             highlight: 'element'
         },
         {
@@ -1055,47 +1055,76 @@ function highlightElement(selector, position) {
     // Scroll naar element
     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     
-    // Wacht even voor scroll animatie
-    setTimeout(() => {
+    // Wacht langer voor scroll animatie en herhaal tot element stabiel is
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const updateSpotlight = () => {
         const rect = element.getBoundingClientRect();
         const spotlight = tutorialOverlay.querySelector('.tutorial-spotlight');
         const tooltip = tutorialOverlay.querySelector('.tutorial-tooltip');
         
         if (!spotlight || !tooltip) return;
         
-        // Bereken spotlight positie en grootte (gebruik getBoundingClientRect voor viewport-relative coördinaten)
-        const padding = 15; // Extra padding rond element voor betere zichtbaarheid
+        // Check of element nog steeds op dezelfde plek staat (scroll animatie klaar)
+        const currentTop = rect.top;
+        const currentLeft = rect.left;
+        
+        // Wacht 50ms en check opnieuw
+        setTimeout(() => {
+            const newRect = element.getBoundingClientRect();
+            // Als positie is veranderd, wacht nog even
+            if (Math.abs(newRect.top - currentTop) > 1 || Math.abs(newRect.left - currentLeft) > 1) {
+                attempts++;
+                if (attempts < maxAttempts) {
+                    updateSpotlight();
+                } else {
+                    // Gebruik laatste rect zelfs als nog niet stabiel
+                    applySpotlight(newRect, spotlight, tooltip, position);
+                }
+            } else {
+                // Positie is stabiel, pas spotlight toe
+                applySpotlight(newRect, spotlight, tooltip, position);
+            }
+        }, 50);
+    };
+    
+    const applySpotlight = (rect, spotlight, tooltip, position) => {
+        const padding = 15;
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
         
-        // Clip-path coördinaten (viewport-relative)
-        // Zorg dat we altijd wat extra ruimte hebben rond het element
+        // Extra padding voor elementen onderaan het scherm (zoals footer)
+        const isNearBottom = rect.bottom > viewportHeight * 0.7;
+        const bottomPadding = isNearBottom ? padding + 30 : padding; // Extra ruimte onderaan
+        
+        // Clip-path coördinaten (viewport-relative, absoluut)
         const left = Math.max(0, rect.left - padding);
         const top = Math.max(0, rect.top - padding);
         const right = Math.min(viewportWidth, rect.right + padding);
-        const bottom = Math.min(viewportHeight, rect.bottom + padding);
+        // Geef extra ruimte onderaan als element onderaan scherm is
+        const bottom = Math.min(viewportHeight, rect.bottom + bottomPadding);
         
-        // Maak clip-path polygon voor cutout effect
-        // De polygon maakt een "venster" in de donkere overlay
+        // Maak clip-path polygon - gebruik absoluut pixel waarden
         spotlight.style.clipPath = `polygon(
-            0% 0%, 
-            0% 100%, 
-            ${left}px 100%, 
+            0px 0px, 
+            0px ${viewportHeight}px, 
+            ${left}px ${viewportHeight}px, 
             ${left}px ${top}px, 
             ${right}px ${top}px, 
             ${right}px ${bottom}px, 
             ${left}px ${bottom}px, 
-            ${left}px 100%, 
-            100% 100%, 
-            100% 0%
+            ${left}px ${viewportHeight}px, 
+            ${viewportWidth}px ${viewportHeight}px, 
+            ${viewportWidth}px 0px
         )`;
         
-        // Zorg dat spotlight zichtbaar is
         spotlight.style.display = 'block';
-        
-        // Positioneer tooltip
         positionTooltip(tooltip, rect, position);
-    }, 400);
+    };
+    
+    // Start na initiële delay
+    setTimeout(updateSpotlight, 300);
 }
 
 /**
