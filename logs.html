@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battlekart Logs Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/logs.css">
+</head>
+<body>
+    <!-- Wachtwoord authenticatie modal -->
+    <div id="password-modal" class="name-modal" style="display: none;">
+        <div class="name-modal-backdrop"></div>
+        <div class="name-modal-content">
+            <h2>Logs Dashboard Toegang</h2>
+            <p>Voer het wachtwoord in om de logs te bekijken:</p>
+            <form id="password-form" onsubmit="handlePasswordSubmit(event)">
+                <input 
+                    type="password" 
+                    id="password-input" 
+                    placeholder="Wachtwoord" 
+                    required 
+                    autofocus
+                >
+                <div id="password-error" class="form-error" style="display: none;"></div>
+                <div class="name-modal-actions">
+                    <button type="submit" class="btn-primary">Inloggen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main logs container -->
+    <div id="logs-container" class="logs-container" style="display: none;">
+        <!-- Header -->
+        <div class="logs-header">
+            <div>
+                <h1>Battlekart Logs Dashboard</h1>
+                <a href="index.html" class="back-link">← Terug naar Dashboard</a>
+            </div>
+            <button class="btn-secondary" onclick="logout()">Uitloggen</button>
+        </div>
+
+        <!-- Filters sectie -->
+        <div class="filters-section">
+            <div class="filter-group">
+                <label for="date-from">Van datum:</label>
+                <input type="date" id="date-from" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="date-to">Tot datum:</label>
+                <input type="date" id="date-to" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="user-filter">Gebruiker:</label>
+                <select id="user-filter" onchange="applyFilters()">
+                    <option value="">Alle gebruikers</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="type-filter">Type:</label>
+                <select id="type-filter" onchange="applyFilters()">
+                    <option value="">Alle types</option>
+                    <option value="clicks">Clicks</option>
+                    <option value="kuismachine">Kuismachine</option>
+                    <option value="kart-daily">Kart Daily</option>
+                </select>
+            </div>
+            <div class="filter-group filter-search">
+                <label for="search-input">Zoeken:</label>
+                <input type="text" id="search-input" placeholder="Zoek in alle velden..." oninput="applyFilters()">
+            </div>
+        </div>
+
+        <!-- Statistieken sectie -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-label">Totaal Logs</div>
+                <div class="stat-value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Meest Actieve Gebruiker</div>
+                <div class="stat-value" id="stat-user">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Click Logs</div>
+                <div class="stat-value" id="stat-clicks">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Kuismachine Logs</div>
+                <div class="stat-value" id="stat-kuismachine">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Kart Daily Checks</div>
+                <div class="stat-value" id="stat-kart-daily">0</div>
+            </div>
+        </div>
+
+        <!-- Export knoppen -->
+        <div class="export-section">
+            <button class="btn-primary" onclick="exportAllLogs()">Export Alle Logs</button>
+            <button class="btn-secondary" onclick="exportClickLogs()">Export Clicks</button>
+            <button class="btn-secondary" onclick="exportKuismachineLogs()">Export Kuismachine</button>
+            <button class="btn-secondary" onclick="exportKartDailyChecks()">Export Kart Daily</button>
+        </div>
+
+        <!-- Tabs voor verschillende log types -->
+        <div class="logs-tabs">
+            <button class="tab-button active" onclick="switchTab('clicks', event)">Click Logs</button>
+            <button class="tab-button" onclick="switchTab('kuismachine', event)">Kuismachine Logs</button>
+            <button class="tab-button" onclick="switchTab('kart-daily', event)">Kart Daily Checks</button>
+        </div>
+
+        <!-- Click Logs Tabel -->
+        <div id="tab-clicks" class="tab-content active">
+            <div class="table-container">
+                <table class="logs-table" id="clicks-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('clicks-table', 0)">Datum/Tijd ↑↓</th>
+                            <th onclick="sortTable('clicks-table', 1)">Gebruiker ↑↓</th>
+                            <th onclick="sortTable('clicks-table', 2)">Tool ↑↓</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clicks-table-body">
+                        <tr><td colspan="3" class="loading">Laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Kuismachine Logs Tabel -->
+        <div id="tab-kuismachine" class="tab-content">
+            <div class="table-container">
+                <table class="logs-table" id="kuismachine-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('kuismachine-table', 0)">Datum/Tijd ↑↓</th>
+                            <th onclick="sortTable('kuismachine-table', 1)">Gebruiker ↑↓</th>
+                            <th onclick="sortTable('kuismachine-table', 2)">Kuismachine ↑↓</th>
+                            <th onclick="sortTable('kuismachine-table', 3)">Pistes ↑↓</th>
+                            <th onclick="sortTable('kuismachine-table', 4)">Uitgekuist ↑↓</th>
+                            <th onclick="sortTable('kuismachine-table', 5)">Stofzuiger ↑↓</th>
+                            <th onclick="sortTable('kuismachine-table', 6)">Reden ↑↓</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kuismachine-table-body">
+                        <tr><td colspan="7" class="loading">Laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Kart Daily Checks Tabel -->
+        <div id="tab-kart-daily" class="tab-content">
+            <div class="table-container">
+                <table class="logs-table" id="kart-daily-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('kart-daily-table', 0)">Datum/Tijd ↑↓</th>
+                            <th onclick="sortTable('kart-daily-table', 1)">Gebruiker ↑↓</th>
+                            <th onclick="sortTable('kart-daily-table', 2)">Problemen ↑↓</th>
+                            <th onclick="sortTable('kart-daily-table', 3)">Gekuist ↑↓</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kart-daily-table-body">
+                        <tr><td colspan="5" class="loading">Laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        
+        // Firebase configuratie
+        const firebaseConfig = {
+            apiKey: "AIzaSyDPLYMn7SkaYUjlyk1LjAY3mv-EaUz96Fw",
+            authDomain: "battlekartoverview.firebaseapp.com",
+            databaseURL: "https://battlekartoverview-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "battlekartoverview",
+            storageBucket: "battlekartoverview.firebasestorage.app",
+            messagingSenderId: "627461116548",
+            appId: "1:627461116548:web:8fb3b10824f3236105a8d1",
+            measurementId: "G-RVLESW1G3L"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Maak database en functies beschikbaar voor logs.js
+        window.firebaseDatabase = database;
+        window.firebaseDatabaseFunctions = { ref, get };
+    </script>
+    <script src="js/logs.js"></script>
+</body>
+</html>
+

@@ -805,6 +805,15 @@ function handleQuickLinkClick(linkId) {
 }
 
 /**
+ * Open help tutorial (placeholder voor toekomstige implementatie)
+ */
+function openHelpTutorial() {
+    // Placeholder functie - wordt later geïmplementeerd
+    alert('Hulp & Tutorial functie komt binnenkort beschikbaar!');
+    // TODO: Implementeer interactieve tutorial overlay
+}
+
+/**
  * Handle link click - log de klik tijd
  */
 function handleLinkClick(toolId, event) {
@@ -1995,11 +2004,42 @@ async function renderDayPlanning() {
     // Haal status op uit Firebase
     const status = await getDayPlanningStatus(dateString, currentUserName);
     
-    let html = '<div class="day-planning-header"><h2>Dagplanning</h2></div>';
+    // Vind volgende incomplete taak
+    let nextTask = null;
+    const allTasks = [...dayPlanning.opening, ...dayPlanning.during, ...dayPlanning.closing];
+    for (const task of allTasks) {
+        const isCompleted = status[task.id]?.completed || false;
+        if (!isCompleted) {
+            nextTask = task;
+            break;
+        }
+    }
+    
+    // Check of expanded state behouden moet worden
+    const wasExpanded = planningContainer.classList.contains('expanded');
+    
+    // Build header met volgende taak
+    let headerHTML = '<div class="day-planning-header" onclick="toggleDayPlanning()">';
+    headerHTML += '<h2>';
+    headerHTML += '<span>📋 Dagplanning</span>';
+    if (nextTask) {
+        headerHTML += `<span class="day-planning-next-task">→ Volgende taak: <span class="task-name">${escapeHtml(nextTask.icon)} ${escapeHtml(nextTask.title)}</span></span>`;
+    } else {
+        headerHTML += '<span class="day-planning-next-task">→ Alle taken voltooid! 🎉</span>';
+    }
+    headerHTML += '</h2>';
+    headerHTML += '<div class="day-planning-toggle">';
+    headerHTML += '<span class="day-planning-toggle-text">' + (wasExpanded ? 'Inklappen' : 'Uitklappen') + '</span>';
+    headerHTML += '<span class="day-planning-toggle-icon">▼</span>';
+    headerHTML += '</div>';
+    headerHTML += '</div>';
+    
+    // Build content
+    let contentHTML = '<div class="day-planning-content">';
     
     // Opening sectie
     if (dayPlanning.opening.length > 0) {
-        html += '<div class="planning-section"><h3>Opening</h3><div class="planning-tasks">';
+        contentHTML += '<div class="planning-section"><h3>Opening</h3><div class="planning-tasks">';
         for (const task of dayPlanning.opening) {
             const isCompleted = status[task.id]?.completed || false;
             // Haal laatste klik data op als taak een toolId heeft
@@ -2007,14 +2047,14 @@ async function renderDayPlanning() {
             if (task.toolId) {
                 lastClickData = await getLastClickData(task.toolId);
             }
-            html += renderPlanningTask(task, isCompleted, lastClickData);
+            contentHTML += renderPlanningTask(task, isCompleted, lastClickData);
         }
-        html += '</div></div>';
+        contentHTML += '</div></div>';
     }
     
     // During sectie (leeg voor nu, maar structuur is er)
     if (dayPlanning.during.length > 0) {
-        html += '<div class="planning-section"><h3>Doorheen de dag</h3><div class="planning-tasks">';
+        contentHTML += '<div class="planning-section"><h3>Doorheen de dag</h3><div class="planning-tasks">';
         for (const task of dayPlanning.during) {
             const isCompleted = status[task.id]?.completed || false;
             // Haal laatste klik data op als taak een toolId heeft
@@ -2022,14 +2062,14 @@ async function renderDayPlanning() {
             if (task.toolId) {
                 lastClickData = await getLastClickData(task.toolId);
             }
-            html += renderPlanningTask(task, isCompleted, lastClickData);
+            contentHTML += renderPlanningTask(task, isCompleted, lastClickData);
         }
-        html += '</div></div>';
+        contentHTML += '</div></div>';
     }
     
     // Closing sectie
     if (dayPlanning.closing.length > 0) {
-        html += '<div class="planning-section"><h3>Sluiting</h3><div class="planning-tasks">';
+        contentHTML += '<div class="planning-section"><h3>Sluiting</h3><div class="planning-tasks">';
         for (const task of dayPlanning.closing) {
             const isCompleted = status[task.id]?.completed || false;
             // Haal laatste klik data op als taak een toolId heeft
@@ -2037,12 +2077,39 @@ async function renderDayPlanning() {
             if (task.toolId) {
                 lastClickData = await getLastClickData(task.toolId);
             }
-            html += renderPlanningTask(task, isCompleted, lastClickData);
+            contentHTML += renderPlanningTask(task, isCompleted, lastClickData);
         }
-        html += '</div></div>';
+        contentHTML += '</div></div>';
     }
     
-    planningContainer.innerHTML = html;
+    contentHTML += '</div>';
+    
+    planningContainer.innerHTML = headerHTML + contentHTML;
+    
+    // Herstel expanded state
+    if (wasExpanded) {
+        planningContainer.classList.add('expanded');
+    } else {
+        planningContainer.classList.remove('expanded');
+    }
+}
+
+/**
+ * Toggle dagplanning expanded/collapsed state
+ */
+function toggleDayPlanning() {
+    const planningContainer = document.getElementById('day-planning');
+    if (!planningContainer) {
+        return;
+    }
+    
+    planningContainer.classList.toggle('expanded');
+    
+    // Update toggle text
+    const toggleText = planningContainer.querySelector('.day-planning-toggle-text');
+    if (toggleText) {
+        toggleText.textContent = planningContainer.classList.contains('expanded') ? 'Inklappen' : 'Uitklappen';
+    }
 }
 
 /**
@@ -2397,5 +2464,148 @@ async function handlePlanningTaskClick(taskId, event) {
         setTimeout(async () => {
             await renderDayPlanning();
         }, 500);
+    }
+}
+
+/**
+ * Open feedback modal
+ */
+function openFeedbackModal() {
+    const modal = document.getElementById('feedback-modal');
+    if (!modal) {
+        return;
+    }
+    
+    // Reset form
+    const form = document.getElementById('feedback-form');
+    if (form) {
+        form.reset();
+    }
+    
+    // Hide error/success messages
+    const errorDiv = document.getElementById('feedback-form-error');
+    const successDiv = document.getElementById('feedback-form-success');
+    if (errorDiv) errorDiv.style.display = 'none';
+    if (successDiv) successDiv.style.display = 'none';
+    
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Focus on first input
+    setTimeout(() => {
+        const firstInput = document.getElementById('feedback-type');
+        if (firstInput) firstInput.focus();
+    }, 100);
+}
+
+/**
+ * Close feedback modal
+ */
+function closeFeedbackModal() {
+    const modal = document.getElementById('feedback-modal');
+    if (!modal) {
+        return;
+    }
+    
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    
+    // Reset form after animation
+    setTimeout(() => {
+        const form = document.getElementById('feedback-form');
+        if (form) {
+            form.reset();
+        }
+        const errorDiv = document.getElementById('feedback-form-error');
+        const successDiv = document.getElementById('feedback-form-success');
+        if (errorDiv) errorDiv.style.display = 'none';
+        if (successDiv) successDiv.style.display = 'none';
+    }, 300);
+}
+
+/**
+ * Handle feedback form submit
+ */
+async function handleFeedbackSubmit(event) {
+    event.preventDefault();
+    
+    const errorDiv = document.getElementById('feedback-form-error');
+    const successDiv = document.getElementById('feedback-form-success');
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    
+    // Hide previous messages
+    if (errorDiv) errorDiv.style.display = 'none';
+    if (successDiv) successDiv.style.display = 'none';
+    
+    // Disable submit button
+    const originalText = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Verzenden...';
+    
+    try {
+        // Get form data
+        const formData = {
+            type: document.getElementById('feedback-type').value,
+            title: document.getElementById('feedback-title').value.trim(),
+            description: document.getElementById('feedback-description').value.trim(),
+            email: document.getElementById('feedback-email').value.trim() || null,
+            userName: currentUserName || 'Anoniem',
+            timestamp: Date.now(),
+            dateTime: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            url: window.location.href
+        };
+        
+        // Validate
+        if (!formData.type || !formData.title || !formData.description) {
+            throw new Error('Vul alle verplichte velden in.');
+        }
+        
+        // Save to Firebase
+        await saveFeedbackToFirebase(formData);
+        
+        // Show success message
+        if (successDiv) {
+            successDiv.style.display = 'block';
+        }
+        
+        // Reset form
+        event.target.reset();
+        
+        // Close modal after 2 seconds
+        setTimeout(() => {
+            closeFeedbackModal();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error submitting feedback:', error);
+        if (errorDiv) {
+            errorDiv.textContent = error.message || 'Er is een fout opgetreden bij het verzenden. Probeer het opnieuw.';
+            errorDiv.style.display = 'block';
+        }
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
+    }
+}
+
+/**
+ * Save feedback to Firebase
+ */
+async function saveFeedbackToFirebase(feedbackData) {
+    if (!database || !firebaseFunctions) {
+        throw new Error('Firebase niet beschikbaar');
+    }
+    
+    try {
+        const { ref, push } = firebaseFunctions;
+        const feedbackRef = ref(database, 'feedback');
+        await push(feedbackRef, feedbackData);
+        
+        console.log('Feedback opgeslagen in Firebase');
+    } catch (error) {
+        console.error('Error saving feedback to Firebase:', error);
+        throw new Error('Kon feedback niet opslaan. Controleer je internetverbinding.');
     }
 }

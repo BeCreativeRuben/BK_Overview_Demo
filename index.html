@@ -187,37 +187,46 @@
 
     <div class="container" id="main-container" style="display: none;">
         <header>
-            <h1>Battlekart Dashboard</h1>
-            <p class="subtitle">Overzicht van alle tools en toepassingen</p>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Battlekart Dashboard</h1>
+                    <p class="subtitle">Overzicht van alle tools en toepassingen</p>
+                </div>
+                <div class="header-right">
+                    <div class="header-links">
+                        <a href="https://oauth.battlekart.com/authorize?client_id=d66a502f0a4b7690ed5808e0b559010b&redirect_uri=https%3A%2F%2Fpanel.battlekart.com%2F&response_type=id_token&scope=openid+profile+email&state=33be5a04e47045b69f25360d57512097&brand_id=2&flow=" 
+                           target="_blank" 
+                           class="header-link-item"
+                           onclick="handleQuickLinkClick('bk-panel')">
+                            <span class="header-link-icon">⚙️</span>
+                            <span class="header-link-label">BK Panel</span>
+                        </a>
+                        <a href="https://outlook.office365.com/mail/" 
+                           target="_blank" 
+                           class="header-link-item"
+                           onclick="handleQuickLinkClick('outlook')">
+                            <span class="header-link-icon">📧</span>
+                            <span class="header-link-label">Outlook</span>
+                        </a>
+                        <a href="https://battlekart.com" 
+                           target="_blank" 
+                           class="header-link-item"
+                           onclick="handleQuickLinkClick('bk-website')">
+                            <span class="header-link-icon">🌐</span>
+                            <span class="header-link-label">BK Website</span>
+                        </a>
+                    </div>
+                    <button class="header-help-btn" onclick="openHelpTutorial()" title="Hulp & Tutorial">
+                        <span class="help-icon">❓</span>
+                        <span class="help-label">Hulp</span>
+                    </button>
+                </div>
+            </div>
             <div class="user-info">
                 <span>Ingelogd als: <strong id="current-user-name"></strong></span>
                 <button onclick="changeUserName()" class="btn-change-name">Wijzig naam</button>
             </div>
         </header>
-        
-        <div class="quick-links">
-            <a href="https://oauth.battlekart.com/authorize?client_id=d66a502f0a4b7690ed5808e0b559010b&redirect_uri=https%3A%2F%2Fpanel.battlekart.com%2F&response_type=id_token&scope=openid+profile+email&state=33be5a04e47045b69f25360d57512097&brand_id=2&flow=" 
-               target="_blank" 
-               class="quick-link-item"
-               onclick="handleQuickLinkClick('bk-panel')">
-                <div class="quick-link-icon">⚙️</div>
-                <div class="quick-link-label">BK Panel</div>
-            </a>
-            <a href="https://outlook.office365.com/mail/" 
-               target="_blank" 
-               class="quick-link-item"
-               onclick="handleQuickLinkClick('outlook')">
-                <div class="quick-link-icon">📧</div>
-                <div class="quick-link-label">Outlook</div>
-            </a>
-            <a href="https://battlekart.com" 
-               target="_blank" 
-               class="quick-link-item"
-               onclick="handleQuickLinkClick('bk-website')">
-                <div class="quick-link-icon">🌐</div>
-                <div class="quick-link-label">BK Website</div>
-            </a>
-        </div>
 
         <div id="day-planning" class="day-planning">
             <!-- Dagplanning wordt hier dynamisch gegenereerd -->
@@ -228,6 +237,81 @@
                 <!-- Tool items worden hier dynamisch toegevoegd -->
             </div>
         </main>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <div class="footer-content">
+                <p class="footer-text">Dit is nog een <strong>BETA</strong> versie. Vind je problemen of heb je suggesties?</p>
+                <button class="footer-feedback-btn" onclick="openFeedbackModal()">
+                    <span class="feedback-icon">📢</span>
+                    <span>Meld probleem / Feature request</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="name-modal" style="display: none;">
+        <div class="name-modal-backdrop" onclick="closeFeedbackModal()"></div>
+        <div class="name-modal-content feedback-modal-content">
+            <div class="name-modal-header">
+                <h2>Feedback Indienen</h2>
+                <button class="overlay-close" onclick="closeFeedbackModal()">&times;</button>
+            </div>
+            <form id="feedback-form" onsubmit="handleFeedbackSubmit(event)">
+                <div class="form-group">
+                    <label for="feedback-type">Type <span class="required">*</span></label>
+                    <select id="feedback-type" name="type" required>
+                        <option value="">Selecteer type...</option>
+                        <option value="bug">Bug / Probleem</option>
+                        <option value="feature">Feature Request</option>
+                        <option value="improvement">Verbetering</option>
+                        <option value="other">Anders</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="feedback-title">Titel <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="feedback-title" 
+                        name="title" 
+                        placeholder="Korte beschrijving van het probleem/verzoek..."
+                        required 
+                        maxlength="100"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="feedback-description">Beschrijving <span class="required">*</span></label>
+                    <textarea 
+                        id="feedback-description" 
+                        name="description" 
+                        rows="6" 
+                        placeholder="Beschrijf het probleem of je feature request in detail..."
+                        required
+                        maxlength="1000"
+                    ></textarea>
+                    <small class="form-hint">Maximaal 1000 karakters</small>
+                </div>
+                <div class="form-group">
+                    <label for="feedback-email">Email (optioneel)</label>
+                    <input 
+                        type="email" 
+                        id="feedback-email" 
+                        name="email" 
+                        placeholder="jouw@email.com"
+                    >
+                    <small class="form-hint">Als je een reactie wilt ontvangen</small>
+                </div>
+                <div id="feedback-form-error" class="form-error" style="display: none;"></div>
+                <div id="feedback-form-success" class="form-success" style="display: none;">
+                    <strong>Bedankt!</strong> Je feedback is succesvol verzonden.
+                </div>
+                <div class="name-modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeFeedbackModal()">Annuleren</button>
+                    <button type="submit" class="btn-primary">Verzenden</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Firebase SDK -->
