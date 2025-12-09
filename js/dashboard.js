@@ -636,6 +636,34 @@ async function createToolCard(tool) {
             const problemCount = status.problemCount;
             const allKartsCleaned = status.allKartsCleaned;
             
+            // Verzamel kart nummers met problemen
+            const problemKarts = [];
+            if (status.lastCheck.karts) {
+                Object.keys(status.lastCheck.karts).forEach(kartNum => {
+                    const kart = status.lastCheck.karts[kartNum];
+                    const hasProblem = kart.hasProblem === true || kart.hasProblem === 'true' || kart.hasProblem === 1 || kart.hasProblem === '1';
+                    if (hasProblem) {
+                        problemKarts.push({
+                            number: parseInt(kartNum),
+                            reason: kart.reason || 'Geen reden opgegeven'
+                        });
+                    }
+                });
+            }
+            
+            // Sorteer karts op nummer
+            problemKarts.sort((a, b) => a.number - b.number);
+            
+            // Maak kort overzicht van problematische karts
+            let problemKartsText = '';
+            if (problemKarts.length > 0) {
+                const kartNumbers = problemKarts.map(k => k.number).join(', ');
+                problemKartsText = `<div class="info-item" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0;">
+                    <span class="info-label" style="font-size: 0.85rem; color: #666;">Problematische karts:</span>
+                    <span class="info-value" style="font-size: 0.85rem; color: #dc3545; font-weight: 500;">${escapeHtml(kartNumbers)}</span>
+                </div>`;
+            }
+            
             kartDailyInfoHTML = `
                 <div class="info-item">
                     <span class="info-label">Laatst gecheckt:</span>
@@ -649,6 +677,7 @@ async function createToolCard(tool) {
                     <span class="info-label">Alle karts gekuist:</span>
                     <span class="info-value">${allKartsCleaned ? '<span class="checkmark-yes">✓ Ja</span>' : '<span class="checkmark-no">✗ Nee</span>'}</span>
                 </div>
+                ${problemKartsText}
                 <div class="info-item">
                     <span class="info-label">Door:</span>
                     <span class="info-value info-value-user">${escapeHtml(userName)}</span>
@@ -1822,6 +1851,13 @@ async function openKuismachineOverlay(event) {
     toggleUitgekuistFields('kuismachine');
     toggleUitgekuistFields('stofzuiger');
     
+    // Reset editing flag en submit button tekst
+    delete form.dataset.editingLogId;
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.textContent = 'Opslaan';
+    }
+    
     // Laad en toon logs van vandaag die nog niet uitgekuist zijn
     await loadTodayLogsForEditing();
     
@@ -1835,8 +1871,20 @@ async function openKuismachineOverlay(event) {
  */
 function closeKuismachineOverlay() {
     const overlay = document.getElementById('kuismachine-overlay');
-    overlay.style.display = 'none';
-    document.body.style.overflow = '';
+    if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // Reset editing flag en submit button tekst
+    const form = document.getElementById('kuismachine-form');
+    if (form) {
+        delete form.dataset.editingLogId;
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.textContent = 'Opslaan';
+        }
+    }
 }
 
 /**
@@ -2156,8 +2204,20 @@ async function handleKuismachineSubmit(event) {
     submitButton.textContent = 'Opslaan...';
     
     try {
-        // Sla op in Firebase
-        await saveKuismachineLog(formData);
+        // Check of we een bestaande log aan het bewerken zijn
+        const form = document.getElementById('kuismachine-form');
+        const editingLogId = form.dataset.editingLogId;
+        
+        if (editingLogId) {
+            // Update bestaande log
+            await updateKuismachineLog(formData, editingLogId);
+            
+            // Reset editing flag
+            delete form.dataset.editingLogId;
+        } else {
+            // Nieuwe log aanmaken
+            await saveKuismachineLog(formData);
+        }
         
         // Success - sluit overlay en update card
         closeKuismachineOverlay();
@@ -2250,11 +2310,8 @@ async function getTodayKuismachineLogs() {
                     updatedLater: log.updatedLater === true || log.updatedLater === 'true'
                 };
                 
-                // Alleen logs waar machines gebruikt zijn maar niet uitgekuist
-                if ((normalizedLog.kuismachineGebruikt && !normalizedLog.kuismachineUitgekuist) ||
-                    (normalizedLog.stofzuigerGebruikt && !normalizedLog.stofzuigerUitgekuist)) {
-                    todayLogs.push(normalizedLog);
-                }
+                // Voeg alle logs van vandaag toe (zodat ze allemaal bewerkt kunnen worden)
+                todayLogs.push(normalizedLog);
             }
         });
         
@@ -2266,6 +2323,112 @@ async function getTodayKuismachineLogs() {
         console.error('Error loading today kuismachine logs:', error);
         return [];
     }
+}
+
+/**
+ * Haal een specifieke kuismachine log op uit Firebase
+ */
+async function getKuismachineLogById(logId) {
+    if (!database || !firebaseFunctions) {
+        return null;
+    }
+    
+    try {
+        const { ref, get } = firebaseFunctions;
+        const logRef = ref(database, `logs/kuismachine-logs/${logId}`);
+        const snapshot = await get(logRef);
+        
+        if (snapshot.exists()) {
+            return snapshot.val();
+        }
+    } catch (error) {
+        console.error('Error loading kuismachine log by ID:', error);
+    }
+    
+    return null;
+}
+
+/**
+ * Vul het formulier in met gegevens van een bestaande log
+ */
+async function loadLogIntoForm(logId, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    const log = await getKuismachineLogById(logId);
+    if (!log) {
+        alert('Log niet gevonden');
+        return;
+    }
+    
+    // Reset formulier eerst
+    const form = document.getElementById('kuismachine-form');
+    form.reset();
+    
+    // Verberg alle velden eerst
+    document.getElementById('kuismachine-fields').style.display = 'none';
+    document.getElementById('stofzuiger-fields').style.display = 'none';
+    document.getElementById('kuismachine-niet-gebruikt-reason').style.display = 'none';
+    document.getElementById('stofzuiger-niet-gebruikt-reason').style.display = 'none';
+    
+    // Vul kuismachine velden
+    if (log.kuismachineGebruikt === true || log.kuismachineGebruikt === 'true') {
+        document.getElementById('kuismachine-gebruikt').checked = true;
+        toggleMachineSection('kuismachine');
+        
+        document.getElementById('kuismachine-piste-a').checked = log.kuismachinePisteA === true || log.kuismachinePisteA === 'true';
+        document.getElementById('kuismachine-piste-b').checked = log.kuismachinePisteB === true || log.kuismachinePisteB === 'true';
+        document.getElementById('kuismachine-begintijd').value = log.kuismachineBegintijd || log.kuismachineStarttijd || '';
+        document.getElementById('kuismachine-eindtijd').value = log.kuismachineEindtijd || '';
+        document.getElementById('kuismachine-uitgekuist').checked = log.kuismachineUitgekuist === true || log.kuismachineUitgekuist === 'true';
+        document.getElementById('kuismachine-reden').value = log.kuismachineReden || '';
+        toggleUitgekuistFields('kuismachine');
+    } else if (log.kuismachineNietGebruiktReden) {
+        document.getElementById('kuismachine-niet-gebruikt-reason').style.display = 'block';
+        document.getElementById('kuismachine-niet-gebruikt-reden').value = log.kuismachineNietGebruiktReden || '';
+    }
+    
+    // Vul stofzuiger velden
+    if (log.stofzuigerGebruikt === true || log.stofzuigerGebruikt === 'true') {
+        document.getElementById('stofzuiger-gebruikt').checked = true;
+        toggleMachineSection('stofzuiger');
+        
+        document.getElementById('stofzuiger-piste-a').checked = log.stofzuigerPisteA === true || log.stofzuigerPisteA === 'true';
+        document.getElementById('stofzuiger-piste-b').checked = log.stofzuigerPisteB === true || log.stofzuigerPisteB === 'true';
+        document.getElementById('stofzuiger-begintijd').value = log.stofzuigerBegintijd || log.stofzuigerStarttijd || '';
+        document.getElementById('stofzuiger-eindtijd').value = log.stofzuigerEindtijd || '';
+        document.getElementById('stofzuiger-uitgekuist').checked = log.stofzuigerUitgekuist === true || log.stofzuigerUitgekuist === 'true';
+        document.getElementById('stofzuiger-reden').value = log.stofzuigerReden || '';
+        toggleUitgekuistFields('stofzuiger');
+    } else if (log.stofzuigerNietGebruiktReden) {
+        document.getElementById('stofzuiger-niet-gebruikt-reason').style.display = 'block';
+        document.getElementById('stofzuiger-niet-gebruikt-reden').value = log.stofzuigerNietGebruiktReden || '';
+    }
+    
+    // Bewaar logId voor update
+    form.dataset.editingLogId = logId;
+    
+    // Update submit button tekst
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.textContent = 'Update log';
+    }
+    
+    // Verberg bewerk sectie
+    const editSection = document.getElementById('edit-today-logs-section');
+    if (editSection) {
+        editSection.style.display = 'none';
+    }
+    
+    // Scroll naar formulier sectie
+    setTimeout(() => {
+        const machineContainer = document.querySelector('.machine-sections-container');
+        if (machineContainer) {
+            machineContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
 }
 
 /**
@@ -2298,17 +2461,33 @@ async function loadTodayLogsForEditing() {
             logsHTML += '<div class="today-log-item" style="margin-bottom: 16px; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">';
             logsHTML += `<div style="margin-bottom: 8px;"><strong>Tijd:</strong> ${escapeHtml(timeStr)} | <strong>Door:</strong> ${escapeHtml(log.userName || 'Onbekend')}</div>`;
             
+            // Toon status van machines
+            let statusInfo = [];
+            if (log.kuismachineGebruikt) {
+                statusInfo.push(`🧹 Kuismachine: ${log.kuismachineUitgekuist ? 'Uitgekuist ✓' : 'Niet uitgekuist ✗'}`);
+            }
+            if (log.stofzuigerGebruikt) {
+                statusInfo.push(`💨 Stofzuiger: ${log.stofzuigerUitgekuist ? 'Uitgekuist ✓' : 'Niet uitgekuist ✗'}`);
+            }
+            if (statusInfo.length > 0) {
+                logsHTML += `<div style="margin-bottom: 12px; color: #666; font-size: 0.9rem;">${statusInfo.join(' | ')}</div>`;
+            }
+            
+            // Voeg "Bewerk deze log" knop toe
+            logsHTML += `<div style="margin-bottom: 8px;">`;
+            logsHTML += `<button class="btn-primary" onclick="loadLogIntoForm('${escapeHtml(log.id)}', event)" style="padding: 8px 16px; font-size: 0.9rem; margin-right: 8px;">✏️ Bewerk deze log</button>`;
+            logsHTML += `</div>`;
+            
+            // Snelle actie knoppen voor machines die nog niet uitgekuist zijn
             if (log.kuismachineGebruikt && !log.kuismachineUitgekuist) {
-                logsHTML += '<div style="margin-bottom: 8px;">';
-                logsHTML += '<span style="margin-right: 12px;">🧹 Kuismachine gebruikt maar niet uitgekuist</span>';
-                logsHTML += `<button class="btn-secondary" onclick="markMachineAsUitgekuist('${escapeHtml(log.id)}', 'kuismachine', event)" style="padding: 6px 12px; font-size: 0.85rem;">Markeer als uitgekuist</button>`;
+                logsHTML += '<div style="margin-top: 8px;">';
+                logsHTML += `<button class="btn-secondary" onclick="markMachineAsUitgekuist('${escapeHtml(log.id)}', 'kuismachine', event)" style="padding: 6px 12px; font-size: 0.85rem;">Markeer kuismachine als uitgekuist</button>`;
                 logsHTML += '</div>';
             }
             
             if (log.stofzuigerGebruikt && !log.stofzuigerUitgekuist) {
-                logsHTML += '<div>';
-                logsHTML += '<span style="margin-right: 12px;">💨 Stofzuiger gebruikt maar niet uitgekuist</span>';
-                logsHTML += `<button class="btn-secondary" onclick="markMachineAsUitgekuist('${escapeHtml(log.id)}', 'stofzuiger', event)" style="padding: 6px 12px; font-size: 0.85rem;">Markeer als uitgekuist</button>`;
+                logsHTML += '<div style="margin-top: 8px;">';
+                logsHTML += `<button class="btn-secondary" onclick="markMachineAsUitgekuist('${escapeHtml(log.id)}', 'stofzuiger', event)" style="padding: 6px 12px; font-size: 0.85rem;">Markeer stofzuiger als uitgekuist</button>`;
                 logsHTML += '</div>';
             }
             
@@ -2374,6 +2553,71 @@ async function markMachineAsUitgekuist(logId, machineType, event) {
             button.disabled = false;
             button.textContent = 'Markeer als uitgekuist';
         }
+    }
+}
+
+/**
+ * Update een bestaande kuismachine log volledig
+ */
+async function updateKuismachineLog(formData, logId) {
+    if (!currentUserName) {
+        throw new Error('Geen gebruikersnaam');
+    }
+    
+    if (!database || !firebaseFunctions) {
+        throw new Error('Firebase niet beschikbaar');
+    }
+    
+    try {
+        const { ref, get, set } = firebaseFunctions;
+        const logRef = ref(database, `logs/kuismachine-logs/${logId}`);
+        
+        // Haal huidige log op
+        const snapshot = await get(logRef);
+        if (!snapshot.exists()) {
+            throw new Error('Log niet gevonden');
+        }
+        
+        const currentLog = snapshot.val();
+        const now = new Date();
+        
+        // Converteer tijden naar komma format
+        const convertedFormData = { ...formData };
+        if (convertedFormData.kuismachineBegintijd) {
+            convertedFormData.kuismachineBegintijd = convertTimeToCommaFormat(convertedFormData.kuismachineBegintijd);
+        }
+        if (convertedFormData.kuismachineEindtijd) {
+            convertedFormData.kuismachineEindtijd = convertTimeToCommaFormat(convertedFormData.kuismachineEindtijd);
+        }
+        if (convertedFormData.stofzuigerBegintijd) {
+            convertedFormData.stofzuigerBegintijd = convertTimeToCommaFormat(convertedFormData.stofzuigerBegintijd);
+        }
+        if (convertedFormData.stofzuigerEindtijd) {
+            convertedFormData.stofzuigerEindtijd = convertTimeToCommaFormat(convertedFormData.stofzuigerEindtijd);
+        }
+        
+        // Merge met nieuwe data, behoud originele timestamp en userName
+        const updatedLog = {
+            ...currentLog,
+            ...convertedFormData,
+            timestamp: currentLog.timestamp, // Behoud originele timestamp
+            dateTime: currentLog.dateTime, // Behoud originele datum/tijd
+            userName: currentLog.userName, // Behoud originele gebruiker
+            updatedLater: true,
+            updatedTimestamp: now.getTime(),
+            updatedDateTime: now.toISOString(),
+            updatedBy: currentUserName
+        };
+        
+        // Sla update op
+        await set(logRef, updatedLog);
+        
+        console.log(`Kuismachine log ${logId} geüpdatet`);
+        
+        return updatedLog;
+    } catch (error) {
+        console.error('Error updating kuismachine log:', error);
+        throw error;
     }
 }
 
