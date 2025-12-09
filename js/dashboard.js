@@ -1858,11 +1858,12 @@ async function openKuismachineOverlay(event) {
         submitButton.textContent = 'Opslaan';
     }
     
-    // Check of er al een log is voor vandaag
+    // Check of er al een log is voor vandaag (haal altijd vers uit Firebase)
     const todayLog = await getTodayKuismachineLog();
     
     if (todayLog) {
         // Laad bestaande log automatisch in het formulier
+        // loadLogIntoForm haalt zelf de meest recente versie op via getKuismachineLogById
         await loadLogIntoForm(todayLog.id, null);
         
         // Verberg bewerk sectie (niet nodig want log is al geladen)
@@ -2350,6 +2351,7 @@ async function getTodayKuismachineLog() {
             
             // Check of log van vandaag is
             if (logTimestamp >= todayStart && logTimestamp < todayEnd) {
+                console.log(`Found today's log ${logId}:`, log);
                 return {
                     id: logId,
                     ...log
@@ -2430,10 +2432,13 @@ async function getKuismachineLogById(logId) {
     try {
         const { ref, get } = firebaseFunctions;
         const logRef = ref(database, `logs/kuismachine-logs/${logId}`);
+        // Haal altijd vers op uit Firebase (geen cache)
         const snapshot = await get(logRef);
         
         if (snapshot.exists()) {
-            return snapshot.val();
+            const logData = snapshot.val();
+            console.log(`Loaded log ${logId} from Firebase:`, logData);
+            return logData;
         }
     } catch (error) {
         console.error('Error loading kuismachine log by ID:', error);
@@ -4001,6 +4006,135 @@ async function saveFeedbackToFirebase(feedbackData) {
         console.log('Feedback opgeslagen in Firebase');
     } catch (error) {
         console.error('Error saving feedback to Firebase:', error);
+        throw new Error('Kon feedback niet opslaan. Controleer je internetverbinding.');
+    }
+}
+
+/**
+ * Open anoniem feedback modal
+ */
+function openAnonymousFeedbackModal() {
+    const modal = document.getElementById('anonymous-feedback-modal');
+    const form = document.getElementById('anonymous-feedback-form');
+    const errorDiv = document.getElementById('anonymous-feedback-form-error');
+    const successDiv = document.getElementById('anonymous-feedback-form-success');
+    
+    // Reset formulier
+    form.reset();
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    
+    // Toon modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Sluit anoniem feedback modal
+ */
+function closeAnonymousFeedbackModal() {
+    const modal = document.getElementById('anonymous-feedback-modal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+/**
+ * Handle anoniem feedback form submit
+ */
+async function handleAnonymousFeedbackSubmit(event) {
+    event.preventDefault();
+    
+    const errorDiv = document.getElementById('anonymous-feedback-form-error');
+    const successDiv = document.getElementById('anonymous-feedback-form-success');
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    
+    // Hide previous messages
+    if (errorDiv) errorDiv.style.display = 'none';
+    if (successDiv) successDiv.style.display = 'none';
+    
+    // Disable submit button
+    const originalText = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Verzenden...';
+    
+    try {
+        // Get form data
+        const feedbackText = document.getElementById('anonymous-feedback-text').value.trim();
+        
+        // Validate
+        if (!feedbackText) {
+            throw new Error('Vul je feedback in.');
+        }
+        
+        // Save to Firebase (anoniem - alleen nummer)
+        const feedbackNumber = await saveAnonymousFeedbackToFirebase(feedbackText);
+        
+        // Show success message with number
+        if (successDiv) {
+            const numberSpan = document.getElementById('anonymous-feedback-number');
+            if (numberSpan) {
+                numberSpan.textContent = `#${feedbackNumber}`;
+            }
+            successDiv.style.display = 'block';
+        }
+        
+        // Reset form
+        event.target.reset();
+        
+        // Close modal after 3 seconds
+        setTimeout(() => {
+            closeAnonymousFeedbackModal();
+        }, 3000);
+        
+    } catch (error) {
+        console.error('Error submitting anonymous feedback:', error);
+        if (errorDiv) {
+            errorDiv.textContent = error.message || 'Kon feedback niet verzenden. Probeer het opnieuw.';
+            errorDiv.style.display = 'block';
+        }
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
+    }
+}
+
+/**
+ * Save anoniem feedback to Firebase
+ * Retourneert het nummer van het feedback item
+ */
+async function saveAnonymousFeedbackToFirebase(feedbackText) {
+    if (!database || !firebaseFunctions) {
+        throw new Error('Firebase niet beschikbaar');
+    }
+    
+    try {
+        const { ref, push, get } = firebaseFunctions;
+        
+        // Haal huidige anonieme feedback op om het volgende nummer te bepalen
+        const anonymousFeedbackRef = ref(database, 'anonymous-feedback');
+        const snapshot = await get(anonymousFeedbackRef);
+        
+        let nextNumber = 1;
+        if (snapshot.exists()) {
+            const existingFeedback = snapshot.val();
+            // Tel hoeveel items er zijn
+            const count = Object.keys(existingFeedback).length;
+            nextNumber = count + 1;
+        }
+        
+        // Sla feedback op zonder naam, tijd of datum - alleen nummer en tekst
+        const feedbackData = {
+            number: nextNumber,
+            text: feedbackText
+        };
+        
+        await push(anonymousFeedbackRef, feedbackData);
+        
+        console.log(`Anoniem feedback #${nextNumber} opgeslagen in Firebase`);
+        
+        return nextNumber;
+    } catch (error) {
+        console.error('Error saving anonymous feedback to Firebase:', error);
         throw new Error('Kon feedback niet opslaan. Controleer je internetverbinding.');
     }
 }

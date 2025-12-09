@@ -359,8 +359,41 @@ async function loadFeedback(database, ref, get) {
             });
         }
         
-        // Sorteer op timestamp (nieuwste eerst)
-        allLogs.feedback.sort((a, b) => b.timestamp - a.timestamp);
+        // Laad ook anoniem feedback
+        const anonymousFeedbackRef = ref(database, 'anonymous-feedback');
+        const anonymousSnapshot = await get(anonymousFeedbackRef);
+        
+        if (anonymousSnapshot.exists()) {
+            const anonymousFeedbackData = anonymousSnapshot.val();
+            
+            Object.keys(anonymousFeedbackData).forEach(feedbackId => {
+                const feedback = anonymousFeedbackData[feedbackId];
+                allLogs.feedback.push({
+                    id: `anon-${feedbackId}`,
+                    userName: 'Anoniem',
+                    timestamp: 0, // Geen timestamp voor anoniem feedback
+                    dateTime: '',
+                    type: 'anonymous',
+                    title: `#${feedback.number || '?'}`,
+                    description: feedback.text || '',
+                    email: null,
+                    userAgent: '',
+                    url: '',
+                    feedbackType: 'anonymous',
+                    number: feedback.number || null
+                });
+            });
+        }
+        
+        // Sorteer op nummer voor anoniem feedback, anders op timestamp (nieuwste eerst)
+        allLogs.feedback.sort((a, b) => {
+            if (a.feedbackType === 'anonymous' && b.feedbackType === 'anonymous') {
+                return (b.number || 0) - (a.number || 0); // Nieuwste nummer eerst
+            }
+            if (a.feedbackType === 'anonymous') return -1; // Anoniem feedback eerst
+            if (b.feedbackType === 'anonymous') return 1;
+            return b.timestamp - a.timestamp; // Normale feedback op timestamp
+        });
         
     } catch (error) {
         console.error('Error loading feedback:', error);
@@ -819,28 +852,48 @@ function renderFeedbackTable() {
     }
     
     tbody.innerHTML = filteredLogs.feedback.map((log, index) => {
-        const date = new Date(log.timestamp);
-        const dateStr = date.toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' });
+        // Check of dit anoniem feedback is
+        const isAnonymous = log.feedbackType === 'anonymous';
         
-        const typeBadge = log.type === 'bug' ? 'badge-problem' : 
+        const dateStr = isAnonymous ? '-' : new Date(log.timestamp).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' });
+        
+        const typeBadge = isAnonymous ? 'badge-info' :
+                         log.type === 'bug' ? 'badge-problem' : 
                          log.type === 'feature' ? 'badge-success' : 
                          log.type === 'improvement' ? 'badge-warning' : 'badge-info';
-        const typeText = log.type === 'bug' ? 'Bug' : 
+        const typeText = isAnonymous ? 'Anoniem' :
+                        log.type === 'bug' ? 'Bug' : 
                         log.type === 'feature' ? 'Feature Request' : 
                         log.type === 'improvement' ? 'Verbetering' : 'Anders';
+        
+        const titleText = isAnonymous ? `#${log.number || '?'}` : escapeHtml(log.title);
+        const userNameText = isAnonymous ? '<span style="color: #6c757d; font-style: italic;">Anoniem</span>' : escapeHtml(log.userName);
         
         return `
             <tr class="expandable-row" onclick="toggleFeedbackDetails(${index}, event)">
                 <td>${escapeHtml(dateStr)}</td>
                 <td><span class="badge ${typeBadge}">${escapeHtml(typeText)}</span></td>
-                <td>${escapeHtml(log.title)}</td>
-                <td>${escapeHtml(log.userName)}</td>
+                <td>${titleText}</td>
+                <td>${userNameText}</td>
                 <td><span class="toggle-arrow"></span></td>
             </tr>
             <tr id="feedback-details-${index}" class="expanded-details-row" style="display: none;">
                 <td colspan="5" class="expanded-details">
-                    <h4>Feedback Details</h4>
+                    <h4>${isAnonymous ? 'Anoniem Feedback Details' : 'Feedback Details'}</h4>
                     <div class="expanded-details-content">
+                        ${isAnonymous ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Nummer</div>
+                            <div class="detail-value"><strong>#${log.number || '?'}</strong></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Feedback</div>
+                            <div class="detail-value">${escapeHtml(log.description)}</div>
+                        </div>
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <div class="detail-label" style="color: #6c757d; font-style: italic;">🔒 Dit feedback is volledig anoniem - geen naam, tijd of datum opgeslagen</div>
+                        </div>
+                        ` : `
                         <div class="detail-item">
                             <div class="detail-label">Beschrijving</div>
                             <div class="detail-value">${escapeHtml(log.description)}</div>
@@ -855,6 +908,7 @@ function renderFeedbackTable() {
                             <div class="detail-label">Pagina URL</div>
                             <div class="detail-value">${escapeHtml(log.url)}</div>
                         </div>` : ''}
+                        `}
                     </div>
                 </td>
             </tr>
@@ -1114,15 +1168,19 @@ function exportKartDailyChecks() {
  * Export feedback
  */
 function exportFeedback() {
-    const data = filteredLogs.feedback.map(feedback => ({
-        Datum: new Date(feedback.timestamp).toLocaleString('nl-NL'),
-        Type: feedback.type === 'bug' ? 'Bug' : feedback.type === 'feature' ? 'Feature Request' : feedback.type === 'improvement' ? 'Verbetering' : 'Anders',
-        Titel: feedback.title,
-        Beschrijving: feedback.description,
-        Gebruiker: feedback.userName,
-        Email: feedback.email || '',
-        URL: feedback.url || ''
-    }));
+    const data = filteredLogs.feedback.map(feedback => {
+        const isAnonymous = feedback.feedbackType === 'anonymous';
+        return {
+            Nummer: isAnonymous ? `#${feedback.number || '?'}` : '',
+            Datum: isAnonymous ? '-' : new Date(feedback.timestamp).toLocaleString('nl-NL'),
+            Type: isAnonymous ? 'Anoniem' : (feedback.type === 'bug' ? 'Bug' : feedback.type === 'feature' ? 'Feature Request' : feedback.type === 'improvement' ? 'Verbetering' : 'Anders'),
+            Titel: isAnonymous ? `#${feedback.number || '?'}` : feedback.title,
+            Beschrijving: feedback.description,
+            Gebruiker: isAnonymous ? 'Anoniem' : feedback.userName,
+            Email: isAnonymous ? '-' : (feedback.email || ''),
+            URL: isAnonymous ? '-' : (feedback.url || '')
+        };
+    });
     
     exportToCSV(data, `battlekart-feedback-${new Date().toISOString().split('T')[0]}.csv`);
 }
@@ -1342,7 +1400,55 @@ function setupFirebaseListeners() {
         }, (error) => {
             console.error('Error in feedback listener:', error);
         });
+        
+        // Listener voor nieuwe anoniem feedback
+        const anonymousFeedbackRef = ref(database, 'anonymous-feedback');
+        onValue(anonymousFeedbackRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const feedbackData = snapshot.val();
+                let hasNewLogs = false;
 
+                Object.keys(feedbackData).forEach(feedbackId => {
+                    if (!seenLogIds.feedback.has(`anon-${feedbackId}`)) {
+                        const feedback = feedbackData[feedbackId];
+                        
+                        allLogs.feedback.push({
+                            id: `anon-${feedbackId}`,
+                            userName: 'Anoniem',
+                            timestamp: 0,
+                            dateTime: '',
+                            type: 'anonymous',
+                            title: `#${feedback.number || '?'}`,
+                            description: feedback.text || '',
+                            email: null,
+                            userAgent: '',
+                            url: '',
+                            feedbackType: 'anonymous',
+                            number: feedback.number || null
+                        });
+                        
+                        seenLogIds.feedback.add(`anon-${feedbackId}`);
+                        hasNewLogs = true;
+                    }
+                });
+
+                if (hasNewLogs) {
+                    // Sorteer: anoniem eerst, dan op nummer
+                    allLogs.feedback.sort((a, b) => {
+                        if (a.feedbackType === 'anonymous' && b.feedbackType === 'anonymous') {
+                            return (b.number || 0) - (a.number || 0);
+                        }
+                        if (a.feedbackType === 'anonymous') return -1;
+                        if (b.feedbackType === 'anonymous') return 1;
+                        return b.timestamp - a.timestamp;
+                    });
+                    debouncedUpdate('feedback');
+                }
+            }
+        }, (error) => {
+            console.error('Error in anonymous feedback listener:', error);
+        });
+        
         console.log('Firebase real-time listeners voor logs pagina actief');
     } catch (error) {
         console.error('Error setting up Firebase listeners:', error);

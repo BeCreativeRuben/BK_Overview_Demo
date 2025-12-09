@@ -291,6 +291,10 @@
                     <span class="feedback-icon">📢</span>
                     <span>Meld probleem / Feature request</span>
                 </button>
+                <button class="footer-feedback-btn" onclick="openAnonymousFeedbackModal()" style="background: #6c757d; margin-left: 10px;">
+                    <span class="feedback-icon">🔒</span>
+                    <span>Anoniem Feedback</span>
+                </button>
             </div>
         </footer>
     </div>
@@ -315,6 +319,44 @@
                 <button type="button" class="btn-secondary" onclick="closeDailyReportWarning()">Annuleren</button>
                 <button type="button" class="btn-primary" onclick="proceedToDailyReport()">Doorgaan naar document</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Anoniem Feedback Modal -->
+    <div id="anonymous-feedback-modal" class="name-modal" style="display: none;">
+        <div class="name-modal-backdrop" onclick="closeAnonymousFeedbackModal()"></div>
+        <div class="name-modal-content feedback-modal-content">
+            <div class="name-modal-header">
+                <h2>Anoniem Feedback</h2>
+                <button class="overlay-close" onclick="closeAnonymousFeedbackModal()">&times;</button>
+            </div>
+            <form id="anonymous-feedback-form" onsubmit="handleAnonymousFeedbackSubmit(event)">
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                    <p style="margin: 0; color: #856404; font-size: 0.9rem;">
+                        <strong>🔒 Volledig anoniem:</strong> Je feedback wordt opgeslagen zonder naam, tijd of datum. Alleen een nummer (#1, #2, etc.) wordt gebruikt om je feedback te identificeren.
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label for="anonymous-feedback-text">Je feedback <span class="required">*</span></label>
+                    <textarea 
+                        id="anonymous-feedback-text" 
+                        name="text" 
+                        rows="8" 
+                        placeholder="Deel je frustraties, suggesties of andere feedback hier..."
+                        required
+                        maxlength="2000"
+                    ></textarea>
+                    <small class="form-hint">Maximaal 2000 karakters</small>
+                </div>
+                <div id="anonymous-feedback-form-error" class="form-error" style="display: none;"></div>
+                <div id="anonymous-feedback-form-success" class="form-success" style="display: none;">
+                    <strong>Bedankt!</strong> Je anonieme feedback is verzonden. Je nummer is: <strong id="anonymous-feedback-number"></strong>
+                </div>
+                <div class="name-modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAnonymousFeedbackModal()">Annuleren</button>
+                    <button type="submit" class="btn-primary">Verzenden</button>
+                </div>
+            </form>
         </div>
     </div>
 
