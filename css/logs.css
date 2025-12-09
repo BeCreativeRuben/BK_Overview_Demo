@@ -329,6 +329,26 @@
     color: #856404;
 }
 
+/* Password input styling */
+#password-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: white;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+#password-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: #f8f9fa;
+}
+
 /* Form error styling */
 .form-error {
     color: #dc3545;
