@@ -931,6 +931,10 @@ function handleNameSubmit(event) {
     const userName = nameInput.value.trim();
     
     if (userName && userName.length > 0) {
+        // Check of dit een nieuwe naam is (niet eerder gebruikt)
+        const hasSeenFirstTimePrompt = localStorage.getItem(`hasSeenFirstTimePrompt_${userName}`);
+        const isNewName = !hasSeenFirstTimePrompt;
+        
         saveUserName(userName);
         hideNameModal();
         showDashboard();
@@ -938,6 +942,13 @@ function handleNameSubmit(event) {
         setupFirebaseListeners();
         // Start inactivity timer na login
         startInactivityTimer();
+        
+        // Toon eerste keer pop-up als dit een nieuwe naam is
+        if (isNewName) {
+            setTimeout(() => {
+                showFirstTimePrompt();
+            }, 500); // Korte delay zodat dashboard eerst laadt
+        }
     }
 }
 
@@ -1368,6 +1379,40 @@ function nextTutorialStep() {
 function previousTutorialStep() {
     if (currentTutorialStep > 0) {
         showTutorialStep(currentTutorialStep - 1);
+    }
+}
+
+/**
+ * Toon eerste keer prompt
+ */
+function showFirstTimePrompt() {
+    const modal = document.getElementById('first-time-prompt-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+/**
+ * Sluit eerste keer prompt
+ */
+function closeFirstTimePrompt(startTutorial) {
+    const modal = document.getElementById('first-time-prompt-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // Markeer dat deze gebruiker de prompt heeft gezien
+    if (currentUserName) {
+        localStorage.setItem(`hasSeenFirstTimePrompt_${currentUserName}`, 'true');
+    }
+    
+    // Start tutorial als gebruiker heeft aangegeven dat het de eerste keer is
+    if (startTutorial) {
+        setTimeout(() => {
+            startGeneralTutorial();
+        }, 300);
     }
 }
 

@@ -30,6 +30,29 @@
         </div>
     </div>
 
+    <!-- Eerste keer prompt modal -->
+    <div id="first-time-prompt-modal" class="name-modal" style="display: none;">
+        <div class="name-modal-backdrop" onclick="closeFirstTimePrompt(false)"></div>
+        <div class="name-modal-content">
+            <div class="name-modal-header">
+                <h2>Welkom! 👋</h2>
+            </div>
+            <div style="padding: 20px;">
+                <p style="font-size: 1.1rem; margin-bottom: 24px; text-align: center;">
+                    Is dit de eerste keer dat je het dashboard gebruikt?
+                </p>
+                <div class="name-modal-actions" style="justify-content: center; gap: 12px;">
+                    <button type="button" class="btn-primary" onclick="closeFirstTimePrompt(true)" style="min-width: 150px;">
+                        Ja, eerste keer
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeFirstTimePrompt(false)" style="min-width: 150px;">
+                        Nee, al eerder gebruikt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Kuismachine logs overlay -->
     <div id="kuismachine-overlay" class="name-modal" style="display: none;">
         <div class="name-modal-backdrop" onclick="closeKuismachineOverlay()"></div>
