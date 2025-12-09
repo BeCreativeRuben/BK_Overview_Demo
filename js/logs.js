@@ -121,25 +121,38 @@ async function loadAllLogs() {
     const database = window.firebaseDatabase;
 
     try {
+        console.log('Start loading all logs...');
+        
         // Laad click logs
+        console.log('Loading click logs...');
         await loadClickLogs(database, ref, get);
+        console.log(`Loaded ${allLogs.clicks.length} click logs`);
         
         // Laad kuismachine logs
+        console.log('Loading kuismachine logs...');
         await loadKuismachineLogs(database, ref, get);
+        console.log(`Loaded ${allLogs.kuismachine.length} kuismachine logs`);
         
         // Laad kart daily checks
+        console.log('Loading kart daily checks...');
         await loadKartDailyChecks(database, ref, get);
+        console.log(`Loaded ${allLogs.kartDaily.length} kart daily checks`);
         
         // Laad feedback
+        console.log('Loading feedback...');
         await loadFeedback(database, ref, get);
+        console.log(`Loaded ${allLogs.feedback.length} feedback items`);
         
         // Update filters en render
         populateUserFilter();
         applyFilters();
         calculateStats();
         
+        console.log('Finished loading all logs');
+        
     } catch (error) {
         console.error('Error loading logs:', error);
+        console.error('Error stack:', error.stack);
     }
 }
 
@@ -159,6 +172,11 @@ async function loadClickLogs(database, ref, get) {
             // Itereer door alle tools
             Object.keys(logsData).forEach(toolId => {
                 const toolLogs = logsData[toolId];
+                
+                // Skip als toolLogs null of undefined is
+                if (!toolLogs || typeof toolLogs !== 'object') {
+                    return;
+                }
                 
                 // Itereer door alle logs voor deze tool
                 Object.keys(toolLogs).forEach(logId => {
@@ -233,6 +251,8 @@ async function loadKuismachineLogs(database, ref, get) {
         
     } catch (error) {
         console.error('Error loading kuismachine logs:', error);
+        // Zorg dat we altijd een lege array hebben, zelfs bij error
+        allLogs.kuismachine = [];
     }
 }
 
@@ -252,6 +272,11 @@ async function loadKartDailyChecks(database, ref, get) {
             // Itereer door alle datums
             Object.keys(logsData).forEach(dateString => {
                 const dateLogs = logsData[dateString];
+                
+                // Skip als dateLogs null of undefined is
+                if (!dateLogs || typeof dateLogs !== 'object') {
+                    return;
+                }
                 
                 // Itereer door alle logs voor deze datum
                 Object.keys(dateLogs).forEach(logId => {
@@ -298,6 +323,8 @@ async function loadKartDailyChecks(database, ref, get) {
         
     } catch (error) {
         console.error('Error loading kart daily checks:', error);
+        // Zorg dat we altijd een lege array hebben, zelfs bij error
+        allLogs.kartDaily = [];
     }
 }
 
@@ -337,6 +364,8 @@ async function loadFeedback(database, ref, get) {
         
     } catch (error) {
         console.error('Error loading feedback:', error);
+        // Zorg dat we altijd een lege array hebben, zelfs bij error
+        allLogs.feedback = [];
     }
 }
 
